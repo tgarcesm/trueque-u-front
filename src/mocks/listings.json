@@ -1,0 +1,74 @@
+[
+  {
+    "id": "1",
+    "title": "Cálculo de una variable — James Stewart, 8.ª edición",
+    "description": "Libro de cálculo diferencial e integral usado en Cálculo I y II. Incluye algunos ejercicios resaltados a lápiz; las páginas están completas y legibles.",
+    "category": "Libros",
+    "condition": "Usado - Buen estado",
+    "price": 45000,
+    "location": "Campus norte, facultad de Ingeniería",
+    "status": "available",
+    "images": ["/images/c1.jpg"],
+    "sellerId": "1"
+  },
+  {
+    "id": "2",
+    "title": "Calculadora científica Casio fx-991LA X",
+    "description": "Calculadora autorizada para exámenes. Pilas nuevas. Incluye funda original y manual.",
+    "category": "Electrónica",
+    "condition": "Nuevo",
+    "price": 89900,
+    "location": "Biblioteca central (entrega)",
+    "status": "reserved",
+    "images": ["/images/calculadora.jpg"],
+    "sellerId": "2"
+  },
+  {
+    "id": "3",
+    "title": "Hoddie deportivo (talla M)",
+    "description": "Buzo con capucha del club deportivo de la U. Poco uso, sin manchas ni roturas.",
+    "category": "Ropa",
+    "condition": "Usado - Buen estado",
+    "price": 25000,
+    "location": "Residencia estudiantil A",
+    "status": "available",
+    "images": ["/images/buzo.png"],
+    "sellerId": "3"
+  },
+  {
+    "id": "4",
+    "title": "Mochila North Face 28 L",
+    "description": "Mochila para laptop de hasta 15\". Compartimentos internos. Desgaste visible en correas y esquinas.",
+    "category": "Otro",
+    "condition": "Usado - Desgastado",
+    "price": 35000,
+    "location": "Edificio de Ciencias",
+    "status": "sold",
+    "images": ["/images/mochila.jpeg"],
+    "sellerId": "1"
+  },
+  {
+    "id": "5",
+    "title": "Audífonos Bluetooth Sony WH-CH520",
+    "description": "Audífonos over-ear con buena batería. Ideales para estudiar en biblioteca.",
+    "category": "Electrónica",
+    "condition": "Usado - Buen estado",
+    "price": 120000,
+    "location": "Zona gastronómica",
+    "status": "reserved",
+    "images": ["/images/sony.jpg"],
+    "sellerId": "2"
+  },
+  {
+    "id": "6",
+    "title": "Apuntes impresos de Física I (mecánica)",
+    "description": "Resumen escaneado del curso: cinemática, dinámica y energía. Incluye gráficas y algunos ejemplos tipo parcial.",
+    "category": "Libros",
+    "condition": "Usado - Buen estado",
+    "price": 8000,
+    "location": "Paraninfo",
+    "status": "sold",
+    "images": ["/images/fisica.jpg"],
+    "sellerId": "3"
+  }
+]

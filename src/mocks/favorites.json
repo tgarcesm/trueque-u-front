@@ -1,0 +1,17 @@
+[
+  {
+    "id": "fav-1",
+    "userId": "1",
+    "listingId": "2"
+  },
+  {
+    "id": "fav-2",
+    "userId": "1",
+    "listingId": "5"
+  },
+  {
+    "id": "fav-3",
+    "userId": "1",
+    "listingId": "3"
+  }
+]

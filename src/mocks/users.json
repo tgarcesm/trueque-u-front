@@ -1,0 +1,23 @@
+[
+  {
+    "id": "1",
+    "name": "María González",
+    "program": "Ingeniería Civil",
+    "email": "maria.gonzalez@universidad.edu",
+    "rating": 4.8
+  },
+  {
+    "id": "2",
+    "name": "Carlos Ruiz",
+    "program": "Medicina",
+    "email": "carlos.ruiz@universidad.edu",
+    "rating": 4.5
+  },
+  {
+    "id": "3",
+    "name": "Ana López",
+    "program": "Derecho",
+    "email": "ana.lopez@universidad.edu",
+    "rating": 4.9
+  }
+]

@@ -1,0 +1,30 @@
+[
+  {
+    "id": "msg-1",
+    "chatId": "chat-1",
+    "senderId": "1",
+    "content": "Hola, ¿la calculadora sigue disponible? ¿La probamos en persona antes de pagar?",
+    "createdAt": "2026-04-28T09:15:00.000Z"
+  },
+  {
+    "id": "msg-2",
+    "chatId": "chat-1",
+    "senderId": "2",
+    "content": "Sí, la tengo lista. Podemos encontrarnos mañana a las 13:00 en la biblioteca central, en la sala de trabajo grupal.",
+    "createdAt": "2026-04-28T09:42:30.000Z"
+  },
+  {
+    "id": "msg-3",
+    "chatId": "chat-1",
+    "senderId": "1",
+    "content": "Perfecto. ¿Aceptas transferencia por Nequi o solo efectivo?",
+    "createdAt": "2026-04-28T10:05:12.000Z"
+  },
+  {
+    "id": "msg-4",
+    "chatId": "chat-1",
+    "senderId": "2",
+    "content": "Me sirve transferencia. Te paso el número cuando nos veamos y lo confirmas al instante.",
+    "createdAt": "2026-04-28T10:18:45.000Z"
+  }
+]
