@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import type { Listing } from "../types/index.ts";
 import { getListings } from "../api/listingsService.ts";
+import { statusLabel } from "../utils/statusLabel.ts";
 
 const CATEGORY_OPTIONS = [
   "Todos",
@@ -12,18 +13,6 @@ const CATEGORY_OPTIONS = [
   "Otro",
 ] as const;
 
-function statusLabel(status: Listing["status"]): string {
-  switch (status) {
-    case "available":
-      return "Disponible";
-    case "reserved":
-      return "Reservado";
-    case "sold":
-      return "Vendido";
-    default:
-      return status;
-  }
-}
 
 export default function ListingsPage() {
   const [listings, setListings] = useState<Listing[]>([]);
@@ -143,7 +132,7 @@ export default function ListingsPage() {
                     {listing.images.length > 0 ? (
                       <img
                         src={listing.images[0]}
-                        alt=""
+                        alt={listing.title}
                         className="aspect-[4/3] w-full object-cover"
                       />
                     ) : (
