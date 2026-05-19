@@ -1,23 +1,70 @@
 # TruequeU — Frontend
 
-Integrantes:
-- Tomas Garces  
-- David Orozco  
+---
 
+## Autores
+
+- [@tgarcesm](https://github.com/tgarcesm) — Tomás Garcés
+- [@FreedPandorad78](https://github.com/FreedPandorad78) — David Orozco
 ---
 
 Marketplace pensado para la vida universitaria: un lugar donde los estudiantes pueden comprar, vender o intercambiar cosas (libros, electrónica, ropa de club, lo que necesiten) sin complicarse.
 
-## Cómo correr el proyecto
+---
 
-En la carpeta raíz del repo:
+## Requisitos previos
+
+- [Node.js](https://nodejs.org) instalado
+- Backend [PTruequeU](https://github.com/FreedPandorad78/PTruequeU) corriendo
+
+---
+
+## Configuración
+
+### 1. Clonar repositorio
+
+```bash
+git clone https://github.com/tgarcesm/trueque-u-front.git
+cd trueque-u-front
+```
+
+### 2. Instalar dependencias
 
 ```bash
 npm install
+```
+
+### 3. Configurar variables de entorno
+
+Crear un archivo `.env` en la raíz del proyecto:
+
+VITE_API_URL=http://localhost:5088
+
+> Ajusta el puerto según el que use el backend en tu máquina.
+
+### 4. Correr el proyecto
+
+```bash
 npm run dev
 ```
 
-Después abrí **http://localhost:5173** en el navegador. Listo para ver la app.
+Abrir **http://localhost:5173** en el navegador.
+
+---
+
+## Credenciales de prueba
+
+Los siguientes usuarios existen en el seed del backend:
+
+| Usuario | Email            | Contraseña |
+|---------|------------------|------------|
+| andrea  | andrea@email.com | Test1234!  |
+| bruno   | bruno@email.com  | Test1234!  |
+| carla   | carla@email.com  | Test1234!  |
+
+> También puedes registrar un usuario nuevo desde `/register`.
+
+---
 
 ## Tecnologías
 
@@ -27,46 +74,36 @@ Después abrí **http://localhost:5173** en el navegador. Listo para ver la app.
 - **Tailwind CSS v3** — estilos utility-first
 - **React Router DOM** — rutas y navegación
 
+---
+
 ## Vistas disponibles
 
 | Ruta | Descripción |
 |------|-------------|
 | `/login` | Inicio de sesión |
 | `/register` | Registro de usuario |
-| `/listings` | Listado de publicaciones (home del marketplace después del login conceptual) |
+| `/listings` | Listado de publicaciones con búsqueda y filtro por categoría |
 | `/listings/:id` | Detalle de una publicación |
 | `/publish` | Formulario para publicar un artículo |
 | `/favorites` | Lista de favoritos guardados |
-| `/chat/:id` | Conversación de chat asociada a un id de chat |
+| `/chat/:id` | Conversación de chat asociada a un listing |
 
-## Cómo probar cada vista
+---
 
-Al correr `npm run dev` la app abre directamente en `/listings`. Para ver el resto:
+## Flujo recomendado para probar
 
-| Vista | Qué hacer |
-|-------|-----------|
-| **Login** | Ir a `http://localhost:5173/login`. Usar cualquier email que esté en `src/mocks/users.json` (por ejemplo `carlos.ruiz@universidad.edu`). La contraseña puede ser cualquier cosa (el mock no la valida). |
-| **Register** | Ir a `http://localhost:5173/register`. |
-| **Detalle de publicación** | Desde `/listings`, hacer click en cualquier tarjeta. O ir directo a `http://localhost:5173/listings/1`. |
-| **Chat** | Ir a `http://localhost:5173/chat/chat-1`. Los mensajes del mock aparecen con burbujas (azul = tú, gris = el otro). Se pueden enviar mensajes nuevos (solo persisten mientras no recargues). |
-| **Favoritos** | Ir a `http://localhost:5173/favorites`. Aparecen los 3 favoritos del mock. El botón "Eliminar" los quita del estado local. |
-| **Publicar** | Ir a `http://localhost:5173/publish` o click en "Publicar" en la navbar. Completar título y precio mínimo para habilitar el botón. |
+1. Correr el backend primero
+2. Correr el frontend con `npm run dev`
+3. Ir a `/login` e iniciar sesión con una de las credenciales de prueba
+4. Explorar listings, entrar al detalle, agregar favoritos
+5. Iniciar un chat en una publicación de **otro usuario** (por ejemplo, entrar como bruno e iniciar chat en una publicación de andrea)
+6. Registrar un usuario nuevo desde `/register`
 
-## Datos mockeados
+---
 
-Por ahora todo lo que ves viene de JSON en **`src/mocks/`** (`listings.json`, `users.json`, `favorites.json`, `chats.json`). Son datos de ejemplo para armar pantallas sin depender del servidor.
+## Integración con el backend
 
-Los módulos en **`src/api/`** ya tienen forma de funciones async (login, listings, favoritos, mensajes): el día de mañana reemplazás la lectura de mocks por llamadas HTTP reales sin rehacer desde cero cómo consume la UI esa capa.
-
-## Conectar el backend
-
-El backend es una API ASP.NET Core: [PTruequeU en GitHub](https://github.com/FreedPandorad78/PTruequeU). Para enlazar este front con ese repo:
-
-1. **Configurá la URL base** — En la raíz del front abrís **`.env`** y ajustás `VITE_API_URL`. Por defecto viene `http://localhost:5000`; si tu API corre en otro puerto (por ejemplo el típico `http://localhost:5088`), poné esa URL.
-2. **Dejá de usar mocks en los servicios** — En cada archivo bajo **`src/api/`**, en lugar de importar los JSON, hacés `fetch` a `${API_URL}/…` usando la **`API_URL`** definida en `src/api/config.ts` (la que levanta la variable `VITE_API_URL`).
-3. **Autenticación** — Para rutas protegidas, mandá el JWT desde **`localStorage`** (por ejemplo en el header `Authorization: Bearer …`) igual que espere tu API.
-
-Mapeo aproximado entre endpoints del back y lo que hay hoy en el front:
+El frontend consume la API REST de [PTruequeU](https://github.com/FreedPandorad78/PTruequeU) mediante los servicios en `src/api/`:
 
 | Endpoint (backend) | Servicio / función |
 |-------------------|---------------------|
@@ -76,11 +113,14 @@ Mapeo aproximado entre endpoints del back y lo que hay hoy en el front:
 | `GET /api/Listings/:id` | `listingsService.getListingById` |
 | `POST /api/Listings` | `listingsService.createListing` |
 | `GET /favorites` | `favoritesService.getFavorites` |
-| `POST /favorites/:id` | `favoritesService.addFavorite` |
+| `POST /favorites/:listingId` | `favoritesService.addFavorite` |
 | `DELETE /favorites/:id` | `favoritesService.removeFavorite` |
-| `GET /chats/{id}/messages` | `chatsService.getChatMessages` |
+| `POST /chats/start` | `chatsService.startChat` |
+| `GET /chats/:id/messages` | `chatsService.getChatMessages` |
+| `POST /chats/:id/messages` | `chatsService.sendMessage` |
 
-(Los paths exactos pueden variar según cómo exponga el controller el back — siempre cruzalo con ese repo antes de cerrar integración.)
+La URL base se configura mediante `VITE_API_URL` en el archivo `.env`. La autenticación usa JWT almacenado en `localStorage` y se envía en el header `Authorization: Bearer <token>` en cada request protegido.
+
 
 ## Estructura del proyecto
 
@@ -93,4 +133,5 @@ src/
 ├── mocks/      # Datos ficticios en JSON para desarrollo sin API.
 ├── pages/      # Pantallas por ruta (login, listings, publish, favorites, chat…).
 └── types/      # Interfaces TypeScript compartidas (User, Listing, etc.).
+└── utils/      # Utilidades compartidas (statusLabel, etc.)
 ```
