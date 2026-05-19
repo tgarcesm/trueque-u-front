@@ -1,9 +1,18 @@
 import { type FormEvent, useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import type { ChatMessage } from "../types/index.ts";
-import { getChatMessages } from "../api/chatsService.ts";
+import { getChatMessages, sendMessage } from "../api/chatsService.ts";
 
-const CURRENT_USER_ID = "1";
+function getCurrentUserId(): string {
+  const token = localStorage.getItem("token");
+  if (!token) return "";
+  try {
+    const payload = JSON.parse(atob(token.split(".")[1]));
+    return payload["http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier"] ?? "";
+  } catch {
+    return "";
+  }
+}
 
 export default function ChatPage() {
   const { id } = useParams<{ id: string }>();
@@ -13,6 +22,9 @@ export default function ChatPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [newMessage, setNewMessage] = useState("");
+  const [sending, setSending] = useState(false);
+
+  const currentUserId = getCurrentUserId();
 
   useEffect(() => {
     async function fetchMessages(chatId: string) {
@@ -42,25 +54,25 @@ export default function ChatPage() {
     void fetchMessages(chatId);
   }, [id]);
 
-  function handleSend(e: FormEvent<HTMLFormElement>) {
+  async function handleSend(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
     const chatId = id?.trim();
     const text = newMessage.trim();
     if (!chatId || text === "") return;
 
-    const msg: ChatMessage = {
-      id: Date.now().toString(),
-      chatId,
-      senderId: CURRENT_USER_ID,
-      content: text,
-      createdAt: new Date().toISOString(),
-    };
-
-    setMessages((prev) => [...prev, msg]);
-    setNewMessage("");
+    setSending(true);
+    try {
+      const msg = await sendMessage(chatId, text);
+      setMessages((prev) => [...prev, msg]);
+      setNewMessage("");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "No se pudo enviar el mensaje");
+    } finally {
+      setSending(false);
+    }
   }
 
-  const isSendDisabled = newMessage.trim() === "";
+  const isSendDisabled = newMessage.trim() === "" || sending;
 
   return (
     <main className="flex min-h-screen flex-col bg-neutral-100">
@@ -93,7 +105,7 @@ export default function ChatPage() {
                 </p>
               ) : (
                 messages.map((message) => {
-                  const isOwn = message.senderId === CURRENT_USER_ID;
+                  const isOwn = message.senderId === currentUserId;
                   return (
                     <article
                       key={message.id}
@@ -120,7 +132,7 @@ export default function ChatPage() {
           <div className="sticky bottom-0 border-t border-neutral-200 bg-white px-4 py-3 shadow-[0_-4px_16px_-4px_rgba(0,0,0,0.06)]">
             <form
               className="flex gap-2"
-              onSubmit={(e) => handleSend(e)}
+              onSubmit={(e) => void handleSend(e)}
               noValidate
             >
               <input
@@ -138,7 +150,7 @@ export default function ChatPage() {
                 disabled={isSendDisabled}
                 className="shrink-0 rounded-full bg-neutral-900 px-5 py-2 text-sm font-medium text-white transition enabled:hover:bg-neutral-800 disabled:cursor-not-allowed disabled:opacity-50"
               >
-                Enviar
+                {sending ? "Enviando..." : "Enviar"}
               </button>
             </form>
           </div>

@@ -5,7 +5,14 @@ export async function getChatMessages(chatId: string): Promise<ChatMessage[]> {
   try {
     const res = await authFetch(`${API_URL}/chats/${chatId}/messages`);
     if (!res.ok) throw new Error("No se pudieron obtener los mensajes");
-    return res.json();
+    const data = await res.json();
+    return data.map((m: any) => ({
+      id: m.chatMessageId,
+      chatId: m.threadId,
+      senderId: m.senderId,
+      content: m.text,
+      createdAt: m.sentAt,
+    }));
   } catch (error) {
     if (error instanceof Error) throw error;
     throw new Error("No se pudieron obtener los mensajes");
@@ -34,7 +41,14 @@ export async function sendMessage(chatId: string, text: string): Promise<ChatMes
       body: JSON.stringify({ text }),
     });
     if (!res.ok) throw new Error("No se pudo enviar el mensaje");
-    return res.json();
+    const m = await res.json();
+    return {
+      id: m.chatMessageId,
+      chatId: m.threadId,
+      senderId: m.senderId,
+      content: m.text,
+      createdAt: m.sentAt,
+    };
   } catch (error) {
     if (error instanceof Error) throw error;
     throw new Error("No se pudo enviar el mensaje");
