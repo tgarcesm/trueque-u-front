@@ -3,19 +3,8 @@ import { useNavigate, useParams } from "react-router-dom";
 import type { Listing } from "../types/index.ts";
 import { getListingById } from "../api/listingsService.ts";
 import { addFavorite } from "../api/favoritesService.ts";
-
-function statusLabel(status: Listing["status"]): string {
-  switch (status) {
-    case "available":
-      return "Disponible";
-    case "reserved":
-      return "Reservado";
-    case "sold":
-      return "Vendido";
-    default:
-      return status;
-  }
-}
+import { startChat } from "../api/chatsService.ts";
+import { statusLabel } from "../utils/statusLabel.ts";
 
 export default function ListingDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -24,6 +13,9 @@ export default function ListingDetailPage() {
   const [listing, setListing] = useState<Listing | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [favoriteMsg, setFavoriteMsg] = useState("");
+  const [favoriteError, setFavoriteError] = useState("");
+  const [chatLoading, setChatLoading] = useState(false);
 
   useEffect(() => {
     async function fetchListing(listingId: string) {
@@ -54,22 +46,30 @@ export default function ListingDetailPage() {
   }, [id]);
 
   async function handleAddFavorite() {
-    if (!id) {
-      alert("Publicación no encontrada");
-      return;
-    }
-
+    if (!id) return;
+    setFavoriteMsg("");
+    setFavoriteError("");
     try {
       await addFavorite(id);
-      alert("Agregado a favoritos");
+      setFavoriteMsg("¡Agregado a favoritos!");
     } catch (err) {
-      alert(err instanceof Error ? err.message : "No se pudo agregar el favorito");
+      setFavoriteError(
+        err instanceof Error ? err.message : "No se pudo agregar el favorito",
+      );
     }
   }
 
-  function handleStartChat() {
+  async function handleStartChat() {
     if (!id) return;
-    navigate(`/chat/${id}`);
+    setChatLoading(true);
+    try {
+      const chat = await startChat(id);
+      navigate(`/chat/${chat.id}`);
+    } catch {
+      navigate(`/chat/${id}`);
+    } finally {
+      setChatLoading(false);
+    }
   }
 
   return (
@@ -118,15 +118,11 @@ export default function ListingDetailPage() {
                 </p>
                 <ul className="space-y-1 text-sm text-neutral-600">
                   <li>
-                    <span className="font-medium text-neutral-800">
-                      Categoría:
-                    </span>{" "}
+                    <span className="font-medium text-neutral-800">Categoría:</span>{" "}
                     {listing.category}
                   </li>
                   <li>
-                    <span className="font-medium text-neutral-800">
-                      Condición:
-                    </span>{" "}
+                    <span className="font-medium text-neutral-800">Condición:</span>{" "}
                     {listing.condition}
                   </li>
                   <li>
@@ -134,14 +130,24 @@ export default function ListingDetailPage() {
                     {statusLabel(listing.status)}
                   </li>
                   <li>
-                    <span className="font-medium text-neutral-800">
-                      Ubicación:
-                    </span>{" "}
+                    <span className="font-medium text-neutral-800">Ubicación:</span>{" "}
                     {listing.location}
                   </li>
                 </ul>
               </div>
             </section>
+
+            {/* Feedback inline favoritos */}
+            {favoriteMsg !== "" && (
+              <p className="mt-4 text-sm text-green-600" role="status">
+                {favoriteMsg}
+              </p>
+            )}
+            {favoriteError !== "" && (
+              <p className="mt-4 text-sm text-red-600" role="alert">
+                {favoriteError}
+              </p>
+            )}
 
             <section
               aria-label="Acciones"
@@ -156,10 +162,11 @@ export default function ListingDetailPage() {
               </button>
               <button
                 type="button"
-                onClick={handleStartChat}
-                className="rounded-md border border-neutral-300 bg-white px-4 py-2.5 text-sm font-medium text-neutral-900 transition hover:bg-neutral-50"
+                onClick={() => void handleStartChat()}
+                disabled={chatLoading}
+                className="rounded-md border border-neutral-300 bg-white px-4 py-2.5 text-sm font-medium text-neutral-900 transition hover:bg-neutral-50 disabled:cursor-not-allowed disabled:opacity-50"
               >
-                Iniciar chat
+                {chatLoading ? "Cargando..." : "Iniciar chat"}
               </button>
               <button
                 type="button"

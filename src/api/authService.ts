@@ -1,18 +1,19 @@
 import type { User } from "../types/index.ts";
-import users from "../mocks/users.json";
+import { API_URL } from "./config.ts";
 
 export async function login(email: string, password: string): Promise<User> {
   try {
-    void password;
-    const user = users.find((u) => u.email === email);
-    if (!user) {
-      throw new Error("Credenciales inválidas");
-    }
-    return user as User;
+    const res = await fetch(`${API_URL}/auth/login`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email, password }),
+    });
+    if (!res.ok) throw new Error("Credenciales inválidas");
+    const data = await res.json();
+    localStorage.setItem("token", data.token);
+    return data as User;
   } catch (error) {
-    if (error instanceof Error) {
-      throw error;
-    }
+    if (error instanceof Error) throw error;
     throw new Error("Credenciales inválidas");
   }
 }
@@ -24,19 +25,17 @@ export async function register(
   program: string,
 ): Promise<User> {
   try {
-    void password;
-    const user: User = {
-      id: "99",
-      name,
-      email,
-      program,
-      rating: 5,
-    };
-    return user;
+    void program;
+    const res = await fetch(`${API_URL}/auth/register`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ fullName: name, email, password }),
+    });
+    if (!res.ok) throw new Error("No se pudo registrar el usuario");
+    const data = await res.json();
+    return data as User;
   } catch (error) {
-    if (error instanceof Error) {
-      throw error;
-    }
+    if (error instanceof Error) throw error;
     throw new Error("No se pudo registrar el usuario");
   }
 }

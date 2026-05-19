@@ -62,17 +62,8 @@ export default function FavoritesPage() {
                     key={favorite.id}
                     className="rounded-lg bg-white p-5 shadow-md"
                   >
-                    <p className="text-xs text-neutral-500">
-                      Publicación:{" "}
-                      <span className="font-mono text-neutral-700">
-                        {favorite.listingId}
-                      </span>
-                    </p>
-                    <p className="mt-1 text-sm text-neutral-600">
-                      ID favorito:{" "}
-                      <span className="font-mono text-neutral-800">
-                        {favorite.id}
-                      </span>
+                    <p className="text-lg font-semibold text-neutral-900">
+                      {favorite.title}
                     </p>
                     <div className="mt-4 flex flex-wrap gap-2">
                       <button
