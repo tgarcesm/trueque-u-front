@@ -32,3 +32,10 @@ export interface Favorite {
   userId: string;
   listingId: string;
 }
+
+export interface Favorite {
+  id: string;
+  userId: string;
+  listingId: string;
+  title: string;
+}
