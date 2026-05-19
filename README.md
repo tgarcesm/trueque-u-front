@@ -58,6 +58,7 @@ Los siguientes usuarios existen en el seed del backend:
 
 | Usuario | Email            | Contraseña |
 |---------|------------------|------------|
+| admin   | admin@email.com  | Test1234!  |
 | andrea  | andrea@email.com | Test1234!  |
 | bruno   | bruno@email.com  | Test1234!  |
 | carla   | carla@email.com  | Test1234!  |
