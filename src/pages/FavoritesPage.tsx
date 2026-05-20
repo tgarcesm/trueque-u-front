@@ -31,7 +31,7 @@ export default function FavoritesPage() {
 
   async function handleRemove(favorite: Favorite) {
     try {
-      await removeFavorite(favorite.id);
+      await removeFavorite(favorite.listingId);
       setFavorites((prev) => prev.filter((f) => f.id !== favorite.id));
     } catch (err) {
       setError(

@@ -10,7 +10,7 @@ const CATEGORY_OPTIONS = [
   "Electrónica",
   "Ropa",
   "Deportes",
-  "Otro",
+  "Hogar",
 ] as const;
 
 
