@@ -1,10 +1,22 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import type { Listing } from "../types/index.ts";
-import { getListingById } from "../api/listingsService.ts";
+import { getListingById, deleteListing } from "../api/listingsService.ts";
 import { addFavorite } from "../api/favoritesService.ts";
 import { startChat } from "../api/chatsService.ts";
 import { statusLabel } from "../utils/statusLabel.ts";
+import { reportListing } from "../api/reportsService.ts";
+
+function getCurrentUserId(): string {
+  const token = localStorage.getItem("token");
+  if (!token) return "";
+  try {
+    const payload = JSON.parse(atob(token.split(".")[1]));
+    return payload["http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier"] ?? "";
+  } catch {
+    return "";
+  }
+}
 
 export default function ListingDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -16,6 +28,13 @@ export default function ListingDetailPage() {
   const [favoriteMsg, setFavoriteMsg] = useState("");
   const [favoriteError, setFavoriteError] = useState("");
   const [chatLoading, setChatLoading] = useState(false);
+  const [deleteLoading, setDeleteLoading] = useState(false);
+  const [reportMsg, setReportMsg] = useState("");
+  const [reportError, setReportError] = useState("");
+  const [reportLoading, setReportLoading] = useState(false);
+
+  const currentUserId = getCurrentUserId();
+  const isOwner = listing?.sellerId === currentUserId;
 
   useEffect(() => {
     async function fetchListing(listingId: string) {
@@ -72,6 +91,39 @@ export default function ListingDetailPage() {
     }
   }
 
+  async function handleDelete() {
+    if (!id) return;
+    const confirm = window.confirm("¿Seguro que quieres eliminar esta publicación?");
+    if (!confirm) return;
+    setDeleteLoading(true);
+    try {
+      await deleteListing(id);
+      navigate("/listings");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "No se pudo eliminar la publicación");
+    } finally {
+      setDeleteLoading(false);
+    }
+  }
+
+  async function handleReport() {
+  if (!id) return;
+  const reason = window.prompt("Motivo del reporte (mínimo 3 caracteres):");
+  if (!reason || reason.trim().length < 3) return;
+  const comment = window.prompt("Comentario adicional (mínimo 3 caracteres):");
+  if (!comment || comment.trim().length < 3) return;
+  setReportLoading(true);
+  setReportMsg("");
+  setReportError("");
+  try {
+    await reportListing(id, reason.trim(), comment.trim());
+    setReportMsg("Reporte enviado correctamente.");
+  } catch (err) {
+    setReportError(err instanceof Error ? err.message : "No se pudo enviar el reporte");
+  } finally {
+    setReportLoading(false);
+  }
+}
   return (
     <main className="min-h-screen bg-neutral-50 px-4 py-8">
       <div className="mx-auto w-full max-w-2xl">
@@ -137,7 +189,6 @@ export default function ListingDetailPage() {
               </div>
             </section>
 
-            {/* Feedback inline favoritos */}
             {favoriteMsg !== "" && (
               <p className="mt-4 text-sm text-green-600" role="status">
                 {favoriteMsg}
@@ -148,26 +199,58 @@ export default function ListingDetailPage() {
                 {favoriteError}
               </p>
             )}
+            {reportMsg !== "" && (
+              <p className="mt-4 text-sm text-green-600" role="status">
+                {reportMsg}
+              </p>
+            )}
+            {reportError !== "" && (
+              <p className="mt-4 text-sm text-red-600" role="alert">
+                {reportError}
+              </p>
+            )}
 
             <section
               aria-label="Acciones"
               className="mt-8 flex flex-col gap-3 sm:flex-row sm:flex-wrap"
             >
-              <button
-                type="button"
-                onClick={() => void handleAddFavorite()}
-                className="rounded-md bg-neutral-900 px-4 py-2.5 text-sm font-medium text-white transition hover:bg-neutral-800"
-              >
-                Agregar a favoritos
-              </button>
-              <button
-                type="button"
-                onClick={() => void handleStartChat()}
-                disabled={chatLoading}
-                className="rounded-md border border-neutral-300 bg-white px-4 py-2.5 text-sm font-medium text-neutral-900 transition hover:bg-neutral-50 disabled:cursor-not-allowed disabled:opacity-50"
-              >
-                {chatLoading ? "Cargando..." : "Iniciar chat"}
-              </button>
+              {!isOwner && (
+                <>
+                  <button
+                    type="button"
+                    onClick={() => void handleAddFavorite()}
+                    className="rounded-md bg-neutral-900 px-4 py-2.5 text-sm font-medium text-white transition hover:bg-neutral-800"
+                  >
+                    Agregar a favoritos
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => void handleStartChat()}
+                    disabled={chatLoading}
+                    className="rounded-md border border-neutral-300 bg-white px-4 py-2.5 text-sm font-medium text-neutral-900 transition hover:bg-neutral-50 disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    {chatLoading ? "Cargando..." : "Iniciar chat"}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => void handleReport()}
+                    disabled={reportLoading}
+                    className="rounded-md border border-red-300 bg-white px-4 py-2.5 text-sm font-medium text-red-700 transition hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    {reportLoading ? "Enviando..." : "Reportar"}
+                  </button>
+                </>
+              )}
+              {isOwner && (
+                <button
+                  type="button"
+                  onClick={() => void handleDelete()}
+                  disabled={deleteLoading}
+                  className="rounded-md border border-red-300 bg-white px-4 py-2.5 text-sm font-medium text-red-700 transition hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  {deleteLoading ? "Eliminando..." : "Eliminar publicación"}
+                </button>
+              )}
               <button
                 type="button"
                 onClick={() => navigate("/listings")}

@@ -70,3 +70,15 @@ export async function createListing(
     throw new Error("No se pudo crear el anuncio");
   }
 }
+
+export async function deleteListing(id: string): Promise<void> {
+  try {
+    const res = await authFetch(`${API_URL}/api/Listings/${id}`, {
+      method: "DELETE",
+    });
+    if (!res.ok) throw new Error("No se pudo eliminar la publicación");
+  } catch (error) {
+    if (error instanceof Error) throw error;
+    throw new Error("No se pudo eliminar la publicación");
+  }
+}
