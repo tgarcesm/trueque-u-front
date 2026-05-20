@@ -9,52 +9,39 @@ const CATEGORY_NAMES: Record<string, string> = {
   "bbbbbbbb-bbbb-bbbb-bbbb-000000000005": "Libros",
 };
 
-const DEFAULT_IMAGES: Record<string, string[]> = {
-  "bbbbbbbb-bbbb-bbbb-bbbb-000000000001": [
-    "https://images.unsplash.com/photo-1610945415295-d9bbf067e59c?w=400",
-    "https://images.unsplash.com/photo-1598327105666-5b89351aff97?w=400",
-    "https://images.unsplash.com/photo-1592750475338-74b7b21085ab?w=400",
-  ],
-  "bbbbbbbb-bbbb-bbbb-bbbb-000000000002": [
-    "https://images.unsplash.com/photo-1555041469-a586c61ea9bc?w=400",
-    "https://images.unsplash.com/photo-1493663284031-b7e3aefcae8e?w=400",
-    "https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?w=400",
-  ],
-  "bbbbbbbb-bbbb-bbbb-bbbb-000000000003": [
-    "https://images.unsplash.com/photo-1551028719-00167b16eac5?w=400",
-    "https://images.unsplash.com/photo-1542272604-787c3835535d?w=400",
-    "https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=400",
-  ],
-  "bbbbbbbb-bbbb-bbbb-bbbb-000000000004": [
-    "https://images.unsplash.com/photo-1534438327276-14e5300c3a48?w=400",
-    "https://images.unsplash.com/photo-1485965120184-e220f721d03e?w=400",
-    "https://images.unsplash.com/photo-1617083934551-ac453d8f7097?w=400",
-  ],
-  "bbbbbbbb-bbbb-bbbb-bbbb-000000000005": [
-    "https://images.unsplash.com/photo-1532012197267-da84d127e765?w=400",
-    "https://images.unsplash.com/photo-1497633762265-9d179a990aa6?w=400",
-    "https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?w=400",
-  ],
-};
+function mapListingState(state: unknown): Listing["status"] {
+  if (state === 0) return "available";
+  if (state === 1) return "reserved";
+  return "sold";
+}
 
+function mapCondition(condition: unknown): Listing["condition"] {
+  // Si quieres diferenciar mejor, ajusta esto según tu UI.
+  // Por ahora respetamos el comportamiento que tenías:
+  return condition === 0 ? "Nuevo" : "Usado";
+}
+
+function mapListing(l: any): Listing {
+  return {
+    id: l.listingId,
+    title: l.title,
+    description: l.description,
+    price: l.price,
+    location: l.location,
+    category: CATEGORY_NAMES[l.categoryId] ?? l.categoryId,
+    condition: mapCondition(l.condition),
+    status: mapListingState(l.state),
+    images: Array.isArray(l.images) ? l.images.map((img: any) => img.imageUrl) : [],
+    sellerId: l.userId,
+  };
+}
 
 export async function getListings(): Promise<Listing[]> {
   try {
     const res = await fetch(`${API_URL}/api/Listings?pageSize=50`);
     if (!res.ok) throw new Error("No se pudieron obtener los anuncios");
     const data = await res.json();
-    return data.map((l: any) => ({
-      id: l.listingId,
-      title: l.title,
-      description: l.description,
-      price: l.price,
-      location: l.location,
-      category: CATEGORY_NAMES[l.categoryId] ?? l.categoryId,
-      condition: l.condition === 0 ? "Nuevo" : "Usado",
-      status: l.state === 0 ? "available" : "sold",
-      images: l.images.map((img: any) => img.imageUrl),
-      sellerId: l.userId,
-    }));
+    return data.map(mapListing);
   } catch (error) {
     if (error instanceof Error) throw error;
     throw new Error("No se pudieron obtener los anuncios");
@@ -66,33 +53,21 @@ export async function getListingById(id: string): Promise<Listing> {
     const res = await fetch(`${API_URL}/api/Listings/${id}`);
     if (!res.ok) throw new Error("Anuncio no encontrado");
     const l = await res.json();
-    return {
-      id: l.listingId,
-      title: l.title,
-      description: l.description,
-      price: l.price,
-      location: l.location,
-      category: CATEGORY_NAMES[l.categoryId] ?? l.categoryId,
-      condition: l.condition === 0 ? "Nuevo" : "Usado",
-      status: l.state === 0 ? "available" : "sold",
-      images: l.images.map((img: any) => img.imageUrl),
-      sellerId: l.userId,
-    };
+    return mapListing(l);
   } catch (error) {
     if (error instanceof Error) throw error;
     throw new Error("Anuncio no encontrado");
   }
 }
 
-
 export type CreateListingPayload = {
   title: string;
   description: string;
-  condition: number;     // 0 nuevo, 1 buen estado, 2 desgastado (según tu mapping)
+  condition: number; // 0 nuevo, 1 buen estado, 2 desgastado
   price: number;
   location: string;
-  categoryId: string;    // GUID
-  imageUrls: string[];   // mínimo 3
+  categoryId: string; // GUID
+  imageUrls: string[]; // mínimo 3
 };
 
 export async function createListing(data: CreateListingPayload) {
@@ -102,7 +77,6 @@ export async function createListing(data: CreateListingPayload) {
   });
 
   if (!res.ok) {
-    // intenta leer mensaje del backend si viene
     let msg = "No se pudo crear el anuncio";
     try {
       const err = await res.json();
@@ -126,4 +100,25 @@ export async function deleteListing(id: string): Promise<void> {
     if (error instanceof Error) throw error;
     throw new Error("No se pudo eliminar la publicación");
   }
+}
+
+export async function updateListingState(listingId: string, state: number) {
+  const res = await authFetch(`${API_URL}/api/Listings/${listingId}/state`, {
+    method: "PATCH",
+    body: JSON.stringify({ state }),
+  });
+
+  if (!res.ok) {
+    let msg = "No se pudo cambiar el estado";
+    try {
+      const err = await res.text();
+      msg = err || msg;
+    } catch {
+      // ignore
+    }
+    throw new Error(msg);
+  }
+
+
+  return res.json();
 }

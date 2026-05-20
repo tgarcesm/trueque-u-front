@@ -1,7 +1,11 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import type { Listing } from "../types/index.ts";
-import { getListingById, deleteListing } from "../api/listingsService.ts";
+import {
+  getListingById,
+  deleteListing,
+  updateListingState,
+} from "../api/listingsService.ts";
 import { addFavorite } from "../api/favoritesService.ts";
 import { startChat } from "../api/chatsService.ts";
 import { statusLabel } from "../utils/statusLabel.ts";
@@ -38,6 +42,7 @@ export default function ListingDetailPage() {
   const [reportLoading, setReportLoading] = useState(false);
 
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
+  const [stateLoading, setStateLoading] = useState(false);
 
   const currentUserId = getCurrentUserId();
   const isOwner = listing?.sellerId === currentUserId;
@@ -49,7 +54,7 @@ export default function ListingDetailPage() {
       try {
         const data = await getListingById(listingId);
         setListing(data);
-        setSelectedImageIndex(0); // reset al cambiar de publicación
+        setSelectedImageIndex(0);
       } catch (err) {
         setListing(null);
         setError(
@@ -136,6 +141,21 @@ export default function ListingDetailPage() {
       setReportLoading(false);
     }
   }
+
+ async function handleUpdateState(newState: number) {
+  if (!id) return;
+  setError("");
+  setStateLoading(true);
+  try {
+    await updateListingState(id, newState);
+    const refreshed = await getListingById(id); // <-- este sí mapea state -> status
+    setListing(refreshed);
+  } catch (err) {
+    setError(err instanceof Error ? err.message : "No se pudo cambiar el estado");
+  } finally {
+    setStateLoading(false);
+  }
+}
 
   return (
     <main className="min-h-screen bg-neutral-50 px-4 py-8">
@@ -291,14 +311,38 @@ export default function ListingDetailPage() {
               )}
 
               {isOwner && (
-                <button
-                  type="button"
-                  onClick={() => void handleDelete()}
-                  disabled={deleteLoading}
-                  className="rounded-md border border-red-300 bg-white px-4 py-2.5 text-sm font-medium text-red-700 transition hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-50"
-                >
-                  {deleteLoading ? "Eliminando..." : "Eliminar publicación"}
-                </button>
+                <>
+                  {listing.status === "available" ? (
+                    <button
+                      type="button"
+                      onClick={() => void handleUpdateState(1)}
+                      disabled={stateLoading}
+                      className="rounded-md border border-neutral-300 bg-white px-4 py-2.5 text-sm font-medium text-neutral-900 transition hover:bg-neutral-50 disabled:cursor-not-allowed disabled:opacity-50"
+                    >
+                      {stateLoading ? "Actualizando..." : "Marcar como reservado"}
+                    </button>
+                  ) : null}
+
+                  {listing.status === "reserved" ? (
+                    <button
+                      type="button"
+                      onClick={() => void handleUpdateState(2)}
+                      disabled={stateLoading}
+                      className="rounded-md bg-neutral-900 px-4 py-2.5 text-sm font-medium text-white transition hover:bg-neutral-800 disabled:cursor-not-allowed disabled:opacity-50"
+                    >
+                      {stateLoading ? "Actualizando..." : "Marcar como vendido"}
+                    </button>
+                  ) : null}
+
+                  <button
+                    type="button"
+                    onClick={() => void handleDelete()}
+                    disabled={deleteLoading}
+                    className="rounded-md border border-red-300 bg-white px-4 py-2.5 text-sm font-medium text-red-700 transition hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    {deleteLoading ? "Eliminando..." : "Eliminar publicación"}
+                  </button>
+                </>
               )}
 
               <button
