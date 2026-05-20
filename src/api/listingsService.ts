@@ -84,26 +84,36 @@ export async function getListingById(id: string): Promise<Listing> {
   }
 }
 
-export async function createListing(data: any): Promise<Listing> {
-  try {
-    const res = await authFetch(`${API_URL}/api/Listings`, {
-      method: "POST",
-      body: JSON.stringify({
-        title: data.title,
-        description: data.description,
-        categoryId: data.category,
-        condition: data.condition,
-        price: data.price,
-        location: data.location || "Campus universitario",
-        imageUrls: DEFAULT_IMAGES[data.category] ?? DEFAULT_IMAGES["bbbbbbbb-bbbb-bbbb-bbbb-000000000005"],
-      }),
-    });
-    if (!res.ok) throw new Error("No se pudo crear el anuncio");
-    return res.json();
-  } catch (error) {
-    if (error instanceof Error) throw error;
-    throw new Error("No se pudo crear el anuncio");
+
+export type CreateListingPayload = {
+  title: string;
+  description: string;
+  condition: number;     // 0 nuevo, 1 buen estado, 2 desgastado (según tu mapping)
+  price: number;
+  location: string;
+  categoryId: string;    // GUID
+  imageUrls: string[];   // mínimo 3
+};
+
+export async function createListing(data: CreateListingPayload) {
+  const res = await authFetch(`${API_URL}/api/Listings`, {
+    method: "POST",
+    body: JSON.stringify(data),
+  });
+
+  if (!res.ok) {
+    // intenta leer mensaje del backend si viene
+    let msg = "No se pudo crear el anuncio";
+    try {
+      const err = await res.json();
+      msg = err?.message ?? JSON.stringify(err);
+    } catch {
+      // ignore
+    }
+    throw new Error(msg);
   }
+
+  return res.json();
 }
 
 export async function deleteListing(id: string): Promise<void> {
