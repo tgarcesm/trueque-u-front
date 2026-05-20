@@ -33,118 +33,132 @@ export default function RegisterPage() {
   }
 
   return (
-    <main className="flex min-h-screen items-center justify-center bg-neutral-100 px-4 py-12">
-      <form
-        className="w-full max-w-[400px] rounded-lg bg-white p-8 shadow-md"
-        onSubmit={handleSubmit}
-        noValidate
-      >
-        <h1 className="mb-6 text-center text-xl font-semibold text-neutral-900">
-          Crear cuenta
-        </h1>
+    <main className="flex min-h-screen items-center justify-center bg-gradient-to-br from-indigo-50 via-white to-blue-50 px-4 py-12">
+      <div className="w-full max-w-[420px]">
 
-        <div className="space-y-4">
-          <div>
-            <label
-              htmlFor="register-name"
-              className="mb-1 block text-sm font-medium text-neutral-800"
-            >
-              Nombre completo
-            </label>
-            <input
-              id="register-name"
-              type="text"
-              name="name"
-              autoComplete="name"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              className="w-full rounded-md border border-neutral-300 px-3 py-2 text-neutral-900 shadow-sm outline-none ring-offset-2 focus:border-neutral-400 focus:ring-2 focus:ring-neutral-300"
-              disabled={loading}
-            />
-          </div>
-
-          <div>
-            <label
-              htmlFor="register-email"
-              className="mb-1 block text-sm font-medium text-neutral-800"
-            >
-              Correo electrónico
-            </label>
-            <input
-              id="register-email"
-              type="email"
-              name="email"
-              autoComplete="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="w-full rounded-md border border-neutral-300 px-3 py-2 text-neutral-900 shadow-sm outline-none ring-offset-2 focus:border-neutral-400 focus:ring-2 focus:ring-neutral-300"
-              disabled={loading}
-            />
-          </div>
-
-          <div>
-            <label
-              htmlFor="register-password"
-              className="mb-1 block text-sm font-medium text-neutral-800"
-            >
-              Contraseña
-            </label>
-            <input
-              id="register-password"
-              type="password"
-              name="password"
-              autoComplete="new-password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="w-full rounded-md border border-neutral-300 px-3 py-2 text-neutral-900 shadow-sm outline-none ring-offset-2 focus:border-neutral-400 focus:ring-2 focus:ring-neutral-300"
-              disabled={loading}
-            />
-          </div>
-
-          <div>
-            <label
-              htmlFor="register-program"
-              className="mb-1 block text-sm font-medium text-neutral-800"
-            >
-              Programa académico
-            </label>
-            <input
-              id="register-program"
-              type="text"
-              name="program"
-              autoComplete="organization"
-              value={program}
-              onChange={(e) => setProgram(e.target.value)}
-              className="w-full rounded-md border border-neutral-300 px-3 py-2 text-neutral-900 shadow-sm outline-none ring-offset-2 focus:border-neutral-400 focus:ring-2 focus:ring-neutral-300"
-              disabled={loading}
-            />
-          </div>
+        {/* Logo */}
+        <div className="mb-8 text-center">
+          <span className="text-4xl">🔄</span>
+          <h1 className="mt-2 text-2xl font-bold text-indigo-700">TruequeU</h1>
+          <p className="mt-1 text-sm text-neutral-500">El marketplace universitario</p>
         </div>
 
-        {error !== "" ? (
-          <p className="mt-4 text-sm text-red-600" role="alert">
-            {error}
-          </p>
-        ) : null}
-
-        <button
-          type="submit"
-          disabled={isSubmitDisabled}
-          className="mt-6 w-full rounded-md bg-neutral-900 px-4 py-2.5 text-sm font-medium text-white transition enabled:hover:bg-neutral-800 disabled:cursor-not-allowed disabled:opacity-50"
+        <form
+          className="rounded-2xl bg-white p-8 shadow-lg"
+          onSubmit={handleSubmit}
+          noValidate
         >
-          {loading ? "Cargando..." : "Crear cuenta"}
-        </button>
+          <h2 className="mb-6 text-xl font-semibold text-neutral-900">
+            Crear cuenta
+          </h2>
 
-        <p className="mt-6 text-center text-sm text-neutral-600">
-          ¿Ya tienes cuenta?{" "}
-          <Link
-            className="font-medium text-blue-600 underline underline-offset-2 hover:text-blue-700"
-            to="/login"
+          <div className="space-y-4">
+            <div>
+              <label
+                htmlFor="register-name"
+                className="mb-1 block text-sm font-medium text-neutral-700"
+              >
+                Nombre completo
+              </label>
+              <input
+                id="register-name"
+                type="text"
+                name="name"
+                autoComplete="name"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                className="w-full rounded-xl border border-neutral-200 px-4 py-2.5 text-neutral-900 shadow-sm outline-none transition focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100"
+                disabled={loading}
+                placeholder="Tu nombre"
+              />
+            </div>
+
+            <div>
+              <label
+                htmlFor="register-email"
+                className="mb-1 block text-sm font-medium text-neutral-700"
+              >
+                Correo electrónico
+              </label>
+              <input
+                id="register-email"
+                type="email"
+                name="email"
+                autoComplete="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="w-full rounded-xl border border-neutral-200 px-4 py-2.5 text-neutral-900 shadow-sm outline-none transition focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100"
+                disabled={loading}
+                placeholder="tu@email.com"
+              />
+            </div>
+
+            <div>
+              <label
+                htmlFor="register-password"
+                className="mb-1 block text-sm font-medium text-neutral-700"
+              >
+                Contraseña
+              </label>
+              <input
+                id="register-password"
+                type="password"
+                name="password"
+                autoComplete="new-password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="w-full rounded-xl border border-neutral-200 px-4 py-2.5 text-neutral-900 shadow-sm outline-none transition focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100"
+                disabled={loading}
+                placeholder="••••••••"
+              />
+            </div>
+
+            <div>
+              <label
+                htmlFor="register-program"
+                className="mb-1 block text-sm font-medium text-neutral-700"
+              >
+                Programa académico
+              </label>
+              <input
+                id="register-program"
+                type="text"
+                name="program"
+                autoComplete="organization"
+                value={program}
+                onChange={(e) => setProgram(e.target.value)}
+                className="w-full rounded-xl border border-neutral-200 px-4 py-2.5 text-neutral-900 shadow-sm outline-none transition focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100"
+                disabled={loading}
+                placeholder="Ingeniería de Sistemas"
+              />
+            </div>
+          </div>
+
+          {error !== "" && (
+            <div className="mt-4 rounded-xl bg-red-50 px-4 py-3 text-sm text-red-600" role="alert">
+              ⚠️ {error}
+            </div>
+          )}
+
+          <button
+            type="submit"
+            disabled={isSubmitDisabled}
+            className="mt-6 w-full rounded-xl bg-gradient-to-r from-indigo-600 to-blue-500 px-4 py-2.5 text-sm font-semibold text-white shadow-md transition enabled:hover:from-indigo-700 enabled:hover:to-blue-600 disabled:cursor-not-allowed disabled:opacity-50"
           >
-            Inicia sesión
-          </Link>
-        </p>
-      </form>
+            {loading ? "Cargando..." : "Crear cuenta →"}
+          </button>
+
+          <p className="mt-6 text-center text-sm text-neutral-500">
+            ¿Ya tienes cuenta?{" "}
+            <Link
+              className="font-semibold text-indigo-600 hover:text-indigo-700"
+              to="/login"
+            >
+              Inicia sesión
+            </Link>
+          </p>
+        </form>
+      </div>
     </main>
   );
 }

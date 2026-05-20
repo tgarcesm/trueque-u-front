@@ -13,6 +13,19 @@ const CATEGORY_OPTIONS = [
   "Hogar",
 ] as const;
 
+const CATEGORY_EMOJI: Record<string, string> = {
+  "Libros": "📚",
+  "Electrónica": "💻",
+  "Ropa": "👕",
+  "Deportes": "⚽",
+  "Hogar": "🏠",
+};
+
+const STATUS_COLORS: Record<string, string> = {
+  "available": "bg-green-100 text-green-700",
+  "reserved": "bg-yellow-100 text-yellow-700",
+  "sold": "bg-red-100 text-red-700",
+};
 
 export default function ListingsPage() {
   const [listings, setListings] = useState<Listing[]>([]);
@@ -44,138 +57,124 @@ export default function ListingsPage() {
     const haystack = listing.title.toLowerCase();
     const needle = search.trim().toLowerCase();
     const matchesSearch = needle === "" || haystack.includes(needle);
-
     const matchesCategory =
       categoryFilter === "Todos" || listing.category === categoryFilter;
-
     return matchesSearch && matchesCategory;
   });
 
   return (
-    <main className="min-h-screen bg-neutral-50 px-4 py-8">
+    <main className="min-h-screen bg-slate-50 px-4 py-8">
       <div className="mx-auto max-w-6xl">
-        <section
-          aria-label="Buscar publicaciones"
-          className="mb-8 rounded-lg bg-white p-4 shadow-md sm:p-6"
-        >
-          <h1 className="mb-4 text-2xl font-semibold text-neutral-900">
-            Marketplace universitario
+
+        {/* Hero banner */}
+        <section className="mb-8 rounded-2xl bg-gradient-to-r from-indigo-600 to-blue-500 p-6 text-white shadow-lg sm:p-8">
+          <h1 className="mb-1 text-3xl font-bold tracking-tight">
+            Marketplace universitario 🎓
           </h1>
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-end">
-            <div className="min-w-0 flex-1">
-              <label
-                htmlFor="listings-search"
-                className="mb-1 block text-sm font-medium text-neutral-800"
-              >
-                Buscar
-              </label>
-              <input
-                id="listings-search"
-                type="search"
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                placeholder="Buscar por título..."
-                className="w-full rounded-md border border-neutral-300 px-3 py-2 text-neutral-900 shadow-sm outline-none focus:border-neutral-400 focus:ring-2 focus:ring-neutral-300"
-              />
-            </div>
-            <div className="w-full sm:w-56">
-              <label
-                htmlFor="listings-category"
-                className="mb-1 block text-sm font-medium text-neutral-800"
-              >
-                Categoría
-              </label>
-              <select
-                id="listings-category"
-                value={categoryFilter}
-                onChange={(e) => setCategoryFilter(e.target.value)}
-                className="w-full rounded-md border border-neutral-300 bg-white px-3 py-2 text-neutral-900 shadow-sm outline-none focus:border-neutral-400 focus:ring-2 focus:ring-neutral-300"
-              >
-                {CATEGORY_OPTIONS.map((opt) => (
-                  <option key={opt} value={opt}>
-                    {opt}
-                  </option>
-                ))}
-              </select>
-            </div>
+          <p className="mb-6 text-white/80 text-sm">
+            Compra, vende e intercambia con otros estudiantes
+          </p>
+          <div className="flex flex-col gap-3 sm:flex-row">
+            <input
+              id="listings-search"
+              type="search"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="🔍 Buscar por título..."
+              className="flex-1 rounded-xl border-0 bg-white/20 px-4 py-2.5 text-white placeholder-white/60 outline-none backdrop-blur-sm focus:bg-white/30 focus:ring-2 focus:ring-white/50"
+            />
+            <select
+              id="listings-category"
+              value={categoryFilter}
+              onChange={(e) => setCategoryFilter(e.target.value)}
+              className="rounded-xl border-0 bg-white/20 px-4 py-2.5 text-white outline-none backdrop-blur-sm focus:bg-white/30 focus:ring-2 focus:ring-white/50 sm:w-48"
+            >
+              {CATEGORY_OPTIONS.map((opt) => (
+                <option key={opt} value={opt} className="text-neutral-900">
+                  {opt}
+                </option>
+              ))}
+            </select>
           </div>
         </section>
 
         {loading ? (
-          <p className="text-neutral-700">Cargando...</p>
+          <div className="flex items-center justify-center py-20">
+            <div className="h-10 w-10 animate-spin rounded-full border-4 border-indigo-200 border-t-indigo-600" />
+          </div>
         ) : error !== "" ? (
-          <p className="text-red-600" role="alert">
+          <p className="rounded-xl bg-red-50 p-6 text-red-600" role="alert">
             {error}
           </p>
         ) : (
           <section aria-label="Listado de publicaciones">
             {filteredListings.length === 0 ? (
-              <p className="rounded-lg bg-white p-6 text-neutral-700 shadow-md">
+              <p className="rounded-xl bg-white p-8 text-center text-neutral-500 shadow-sm">
                 No hay publicaciones disponibles
               </p>
             ) : (
-              <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
-                {filteredListings.map((listing) => (
-                  <article
-                    key={listing.id}
-                    tabIndex={0}
-                    role="button"
-                    onClick={() => navigate(`/listings/${listing.id}`)}
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter" || e.key === " ") {
-                        e.preventDefault();
-                        navigate(`/listings/${listing.id}`);
-                      }
-                    }}
-                    className="cursor-pointer overflow-hidden rounded-lg bg-white shadow-md outline-none ring-offset-2 transition hover:shadow-lg focus-visible:ring-2 focus-visible:ring-neutral-400"
-                  >
-                    {listing.images.length > 0 ? (
-                      <img
-                        src={listing.images[0]}
-                        alt={listing.title}
-                        className="aspect-[4/3] w-full object-cover"
-                      />
-                    ) : (
-                      <div
-                        className="flex aspect-[4/3] w-full items-center justify-center bg-neutral-200 text-sm text-neutral-500"
-                        aria-hidden
-                      >
-                        Sin imagen
+              <>
+                <p className="mb-4 text-sm text-neutral-500">
+                  {filteredListings.length} publicación{filteredListings.length !== 1 ? "es" : ""} encontrada{filteredListings.length !== 1 ? "s" : ""}
+                </p>
+                <div className="grid grid-cols-1 gap-5 md:grid-cols-2 lg:grid-cols-3">
+                  {filteredListings.map((listing) => (
+                    <article
+                      key={listing.id}
+                      tabIndex={0}
+                      role="button"
+                      onClick={() => navigate(`/listings/${listing.id}`)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter" || e.key === " ") {
+                          e.preventDefault();
+                          navigate(`/listings/${listing.id}`);
+                        }
+                      }}
+                      className="group cursor-pointer overflow-hidden rounded-2xl bg-white shadow-sm outline-none ring-offset-2 transition-all duration-200 hover:-translate-y-1 hover:shadow-lg focus-visible:ring-2 focus-visible:ring-indigo-400"
+                    >
+                      <div className="relative overflow-hidden">
+                        {listing.images.length > 0 ? (
+                          <img
+                            src={listing.images[0]}
+                            alt={listing.title}
+                            className="aspect-[4/3] w-full object-cover transition-transform duration-300 group-hover:scale-105"
+                          />
+                        ) : (
+                          <div className="flex aspect-[4/3] w-full items-center justify-center bg-indigo-50 text-4xl">
+                            {CATEGORY_EMOJI[listing.category] ?? "📦"}
+                          </div>
+                        )}
+                        <span className={`absolute right-3 top-3 rounded-full px-2.5 py-0.5 text-xs font-semibold ${STATUS_COLORS[listing.status] ?? "bg-gray-100 text-gray-700"}`}>
+                          {statusLabel(listing.status)}
+                        </span>
                       </div>
-                    )}
-                    <div className="space-y-2 p-4">
-                      <h2 className="line-clamp-2 text-lg font-semibold text-neutral-900">
-                        {listing.title}
-                      </h2>
-                      <p className="text-xl font-semibold text-neutral-800">
-                        {listing.price.toLocaleString("es-CO", {
-                          style: "currency",
-                          currency: "COP",
-                          maximumFractionDigits: 0,
-                        })}
-                      </p>
-                      <p className="text-sm text-neutral-600">
-                        <span className="font-medium text-neutral-700">
-                          Categoría:
-                        </span>{" "}
-                        {listing.category}
-                      </p>
-                      <p className="text-sm text-neutral-600">
-                        <span className="font-medium text-neutral-700">
-                          Condición:
-                        </span>{" "}
-                        {listing.condition}
-                      </p>
-                      <p className="text-sm text-neutral-600">
-                        <span className="font-medium text-neutral-700">
-                          Estado:
-                        </span>{" "}
-                        {statusLabel(listing.status)}
-                      </p>
-                    </div>
-                  </article>
-                ))}
-              </div>
+
+                      <div className="p-4">
+                        <div className="mb-2 flex items-start justify-between gap-2">
+                          <h2 className="line-clamp-2 text-base font-semibold text-neutral-900 leading-snug">
+                            {listing.title}
+                          </h2>
+                        </div>
+                        <p className="mb-3 text-xl font-bold text-indigo-600">
+                          {listing.price.toLocaleString("es-CO", {
+                            style: "currency",
+                            currency: "COP",
+                            maximumFractionDigits: 0,
+                          })}
+                        </p>
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <span className="rounded-full bg-indigo-50 px-2.5 py-0.5 text-xs font-medium text-indigo-700">
+                            {CATEGORY_EMOJI[listing.category]} {listing.category}
+                          </span>
+                          <span className="rounded-full bg-slate-100 px-2.5 py-0.5 text-xs font-medium text-slate-600">
+                            {listing.condition}
+                          </span>
+                        </div>
+                      </div>
+                    </article>
+                  ))}
+                </div>
+              </>
             )}
           </section>
         )}
