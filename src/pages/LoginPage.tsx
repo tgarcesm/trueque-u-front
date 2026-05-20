@@ -9,8 +9,7 @@ export default function LoginPage() {
   const [error, setError] = useState("");
   const navigate = useNavigate();
 
-  const isSubmitDisabled =
-    loading || email.trim() === "" || password === "";
+  const isSubmitDisabled = loading || email.trim() === "" || password === "";
 
   async function handleSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -27,80 +26,92 @@ export default function LoginPage() {
   }
 
   return (
-    <main className="flex min-h-screen items-center justify-center bg-neutral-100 px-4 py-12">
-      <form
-        className="w-full max-w-[400px] rounded-lg bg-white p-8 shadow-md"
-        onSubmit={handleSubmit}
-        noValidate
-      >
-        <h1 className="mb-6 text-center text-xl font-semibold text-neutral-900">
-          Iniciar sesión
-        </h1>
+    <main className="flex min-h-screen items-center justify-center bg-gradient-to-br from-indigo-50 via-white to-blue-50 px-4 py-12">
+      <div className="w-full max-w-[420px]">
 
-        <div className="space-y-4">
-          <div>
-            <label
-              htmlFor="login-email"
-              className="mb-1 block text-sm font-medium text-neutral-800"
-            >
-              Correo electrónico
-            </label>
-            <input
-              id="login-email"
-              type="email"
-              name="email"
-              autoComplete="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="w-full rounded-md border border-neutral-300 px-3 py-2 text-neutral-900 shadow-sm outline-none ring-offset-2 focus:border-neutral-400 focus:ring-2 focus:ring-neutral-300"
-              disabled={loading}
-            />
-          </div>
-
-          <div>
-            <label
-              htmlFor="login-password"
-              className="mb-1 block text-sm font-medium text-neutral-800"
-            >
-              Contraseña
-            </label>
-            <input
-              id="login-password"
-              type="password"
-              name="password"
-              autoComplete="current-password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="w-full rounded-md border border-neutral-300 px-3 py-2 text-neutral-900 shadow-sm outline-none ring-offset-2 focus:border-neutral-400 focus:ring-2 focus:ring-neutral-300"
-              disabled={loading}
-            />
-          </div>
+        {/* Logo */}
+        <div className="mb-8 text-center">
+          <span className="text-4xl">🔄</span>
+          <h1 className="mt-2 text-2xl font-bold text-indigo-700">TruequeU</h1>
+          <p className="mt-1 text-sm text-neutral-500">El marketplace universitario</p>
         </div>
 
-        {error !== "" ? (
-          <p className="mt-4 text-sm text-red-600" role="alert">
-            {error}
-          </p>
-        ) : null}
-
-        <button
-          type="submit"
-          disabled={isSubmitDisabled}
-          className="mt-6 w-full rounded-md bg-neutral-900 px-4 py-2.5 text-sm font-medium text-white transition enabled:hover:bg-neutral-800 disabled:cursor-not-allowed disabled:opacity-50"
+        <form
+          className="rounded-2xl bg-white p-8 shadow-lg"
+          onSubmit={handleSubmit}
+          noValidate
         >
-          {loading ? "Cargando..." : "Iniciar sesión"}
-        </button>
+          <h2 className="mb-6 text-xl font-semibold text-neutral-900">
+            Iniciar sesión
+          </h2>
 
-        <p className="mt-6 text-center text-sm text-neutral-600">
-          ¿No tienes cuenta?{" "}
-          <Link
-            className="font-medium text-blue-600 underline underline-offset-2 hover:text-blue-700"
-            to="/register"
+          <div className="space-y-4">
+            <div>
+              <label
+                htmlFor="login-email"
+                className="mb-1 block text-sm font-medium text-neutral-700"
+              >
+                Correo electrónico
+              </label>
+              <input
+                id="login-email"
+                type="email"
+                name="email"
+                autoComplete="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="w-full rounded-xl border border-neutral-200 px-4 py-2.5 text-neutral-900 shadow-sm outline-none transition focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100"
+                disabled={loading}
+                placeholder="tu@email.com"
+              />
+            </div>
+
+            <div>
+              <label
+                htmlFor="login-password"
+                className="mb-1 block text-sm font-medium text-neutral-700"
+              >
+                Contraseña
+              </label>
+              <input
+                id="login-password"
+                type="password"
+                name="password"
+                autoComplete="current-password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="w-full rounded-xl border border-neutral-200 px-4 py-2.5 text-neutral-900 shadow-sm outline-none transition focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100"
+                disabled={loading}
+                placeholder="••••••••"
+              />
+            </div>
+          </div>
+
+          {error !== "" && (
+            <div className="mt-4 rounded-xl bg-red-50 px-4 py-3 text-sm text-red-600" role="alert">
+              ⚠️ {error}
+            </div>
+          )}
+
+          <button
+            type="submit"
+            disabled={isSubmitDisabled}
+            className="mt-6 w-full rounded-xl bg-gradient-to-r from-indigo-600 to-blue-500 px-4 py-2.5 text-sm font-semibold text-white shadow-md transition enabled:hover:from-indigo-700 enabled:hover:to-blue-600 disabled:cursor-not-allowed disabled:opacity-50"
           >
-            Regístrate
-          </Link>
-        </p>
-      </form>
+            {loading ? "Cargando..." : "Iniciar sesión →"}
+          </button>
+
+          <p className="mt-6 text-center text-sm text-neutral-500">
+            ¿No tienes cuenta?{" "}
+            <Link
+              className="font-semibold text-indigo-600 hover:text-indigo-700"
+              to="/register"
+            >
+              Regístrate gratis
+            </Link>
+          </p>
+        </form>
+      </div>
     </main>
   );
 }

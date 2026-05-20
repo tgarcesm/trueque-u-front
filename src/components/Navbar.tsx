@@ -1,21 +1,30 @@
-import { NavLink } from 'react-router-dom'
+import { NavLink, useNavigate } from 'react-router-dom'
 
 function navLinkClass({ isActive }: { isActive: boolean }): string {
   return [
-    'text-sm transition-colors',
+    'text-sm font-medium transition-colors px-3 py-1.5 rounded-full',
     isActive
-      ? 'font-semibold text-blue-600'
-      : 'font-normal text-neutral-700 hover:text-neutral-900',
+      ? 'bg-white text-indigo-700 shadow-sm'
+      : 'text-white/80 hover:text-white hover:bg-white/10',
   ].join(' ')
 }
 
 export default function Navbar() {
+  const navigate = useNavigate();
+
+  function handleLogout() {
+    localStorage.removeItem("token");
+    navigate("/login");
+  }
+
   return (
-    <header className="border-b border-neutral-200 bg-white px-4 py-3 md:px-8">
+    <header className="bg-gradient-to-r from-indigo-600 to-blue-500 shadow-lg px-4 py-3 md:px-8">
       <div className="mx-auto flex max-w-6xl items-center justify-between">
-        <span className="text-lg font-bold text-neutral-900">TruequeU</span>
+        <span className="text-xl font-bold text-white tracking-tight">
+          🔄 TruequeU
+        </span>
         <nav aria-label="Principal">
-          <ul className="flex flex-row gap-4">
+          <ul className="flex flex-row items-center gap-2">
             <li>
               <NavLink to="/listings" className={navLinkClass}>
                 Inicio
@@ -30,6 +39,15 @@ export default function Navbar() {
               <NavLink to="/favorites" className={navLinkClass}>
                 Favoritos
               </NavLink>
+            </li>
+            <li>
+              <button
+                type="button"
+                onClick={handleLogout}
+                className="ml-2 rounded-full border border-white/30 bg-white/10 px-4 py-1.5 text-sm font-medium text-white transition hover:bg-white/20"
+              >
+                Cerrar sesión
+              </button>
             </li>
           </ul>
         </nav>

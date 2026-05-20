@@ -20,30 +20,44 @@ export default function PublishPage() {
     price.trim() === "" ||
     !(priceNumber > 0);
 
+    const CATEGORY_IDS: Record<string, string> = {
+  "Electrónica": "bbbbbbbb-bbbb-bbbb-bbbb-000000000001",
+  "Hogar":       "bbbbbbbb-bbbb-bbbb-bbbb-000000000002",
+  "Ropa":        "bbbbbbbb-bbbb-bbbb-bbbb-000000000003",
+  "Deportes":    "bbbbbbbb-bbbb-bbbb-bbbb-000000000004",
+  "Libros":      "bbbbbbbb-bbbb-bbbb-bbbb-000000000005",
+};
+
+const CONDITION_IDS: Record<string, number> = {
+  "Nuevo": 0,
+  "Usado - Buen estado": 1,
+  "Usado - Desgastado": 2,
+};
+
   async function handleSubmit(e: FormEvent<HTMLFormElement>) {
-    e.preventDefault();
-    setError("");
-    setLoading(true);
-    try {
-      await createListing({
-        title: title.trim(),
-        description,
-        category,
-        condition,
-        price: priceNumber,
-        location,
-        images: [],
-        status: "available",
-      });
-      navigate("/listings");
-    } catch (err) {
-      setError(
-        err instanceof Error ? err.message : "No se pudo publicar el anuncio",
-      );
-    } finally {
-      setLoading(false);
-    }
+  e.preventDefault();
+  setError("");
+  setLoading(true);
+  try {
+    await createListing({
+      title: title.trim(),
+      description,
+      category: CATEGORY_IDS[category] ?? CATEGORY_IDS["Libros"],
+      condition: CONDITION_IDS[condition] ?? 0,
+      price: priceNumber,
+      location,
+      images: [],
+      status: "available",
+    });
+    navigate("/listings");
+  } catch (err) {
+    setError(
+      err instanceof Error ? err.message : "No se pudo publicar el anuncio",
+    );
+  } finally {
+    setLoading(false);
   }
+}
 
   return (
     <main className="flex min-h-screen justify-center bg-neutral-100 px-4 py-8">
@@ -113,7 +127,7 @@ export default function PublishPage() {
                 <option value="Electrónica">Electrónica</option>
                 <option value="Ropa">Ropa</option>
                 <option value="Deportes">Deportes</option>
-                <option value="Otro">Otro</option>
+                <option value="Hogar">Hogar</option>
               </select>
             </div>
 
