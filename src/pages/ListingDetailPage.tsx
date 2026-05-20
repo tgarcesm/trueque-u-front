@@ -1,7 +1,11 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import type { Listing } from "../types/index.ts";
-import { getListingById, deleteListing } from "../api/listingsService.ts";
+import {
+  getListingById,
+  deleteListing,
+  updateListingState,
+} from "../api/listingsService.ts";
 import { addFavorite } from "../api/favoritesService.ts";
 import { startChat } from "../api/chatsService.ts";
 import { statusLabel } from "../utils/statusLabel.ts";
@@ -12,7 +16,11 @@ function getCurrentUserId(): string {
   if (!token) return "";
   try {
     const payload = JSON.parse(atob(token.split(".")[1]));
-    return payload["http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier"] ?? "";
+    return (
+      payload[
+        "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier"
+      ] ?? ""
+    );
   } catch {
     return "";
   }
@@ -33,6 +41,9 @@ export default function ListingDetailPage() {
   const [reportError, setReportError] = useState("");
   const [reportLoading, setReportLoading] = useState(false);
 
+  const [selectedImageIndex, setSelectedImageIndex] = useState(0);
+  const [stateLoading, setStateLoading] = useState(false);
+
   const currentUserId = getCurrentUserId();
   const isOwner = listing?.sellerId === currentUserId;
 
@@ -43,6 +54,7 @@ export default function ListingDetailPage() {
       try {
         const data = await getListingById(listingId);
         setListing(data);
+        setSelectedImageIndex(0);
       } catch (err) {
         setListing(null);
         setError(
@@ -100,30 +112,51 @@ export default function ListingDetailPage() {
       await deleteListing(id);
       navigate("/listings");
     } catch (err) {
-      setError(err instanceof Error ? err.message : "No se pudo eliminar la publicación");
+      setError(
+        err instanceof Error ? err.message : "No se pudo eliminar la publicación",
+      );
     } finally {
       setDeleteLoading(false);
     }
   }
 
   async function handleReport() {
+    if (!id) return;
+    const reason = window.prompt("Motivo del reporte (mínimo 3 caracteres):");
+    if (!reason || reason.trim().length < 3) return;
+    const comment = window.prompt("Comentario adicional (mínimo 3 caracteres):");
+    if (!comment || comment.trim().length < 3) return;
+
+    setReportLoading(true);
+    setReportMsg("");
+    setReportError("");
+    try {
+      await reportListing(id, reason.trim(), comment.trim());
+      setReportMsg("Reporte enviado correctamente.");
+    } catch (err) {
+      setReportError(
+        err instanceof Error ? err.message : "No se pudo enviar el reporte",
+      );
+    } finally {
+      setReportLoading(false);
+    }
+  }
+
+ async function handleUpdateState(newState: number) {
   if (!id) return;
-  const reason = window.prompt("Motivo del reporte (mínimo 3 caracteres):");
-  if (!reason || reason.trim().length < 3) return;
-  const comment = window.prompt("Comentario adicional (mínimo 3 caracteres):");
-  if (!comment || comment.trim().length < 3) return;
-  setReportLoading(true);
-  setReportMsg("");
-  setReportError("");
+  setError("");
+  setStateLoading(true);
   try {
-    await reportListing(id, reason.trim(), comment.trim());
-    setReportMsg("Reporte enviado correctamente.");
+    await updateListingState(id, newState);
+    const refreshed = await getListingById(id); // <-- este sí mapea state -> status
+    setListing(refreshed);
   } catch (err) {
-    setReportError(err instanceof Error ? err.message : "No se pudo enviar el reporte");
+    setError(err instanceof Error ? err.message : "No se pudo cambiar el estado");
   } finally {
-    setReportLoading(false);
+    setStateLoading(false);
   }
 }
+
   return (
     <main className="min-h-screen bg-neutral-50 px-4 py-8">
       <div className="mx-auto w-full max-w-2xl">
@@ -139,11 +172,44 @@ export default function ListingDetailPage() {
           <>
             <section aria-label="Detalle del anuncio" className="space-y-6">
               {listing.images.length > 0 ? (
-                <img
-                  src={listing.images[0]}
-                  alt={listing.title}
-                  className="w-full rounded-lg border border-neutral-200 object-cover shadow-sm"
-                />
+                <div className="space-y-3">
+                  {/* Imagen principal (cambia cuando das click) */}
+                  <img
+                    src={listing.images[selectedImageIndex] ?? listing.images[0]}
+                    alt={listing.title}
+                    className="w-full rounded-lg border border-neutral-200 object-cover shadow-sm"
+                  />
+
+                  {/* Miniaturas */}
+                  {listing.images.length > 1 ? (
+                    <div className="grid grid-cols-3 gap-2">
+                      {listing.images.map((url, idx) => {
+                        const isActive = idx === selectedImageIndex;
+
+                        return (
+                          <button
+                            key={`${url}-${idx}`}
+                            type="button"
+                            onClick={() => setSelectedImageIndex(idx)}
+                            className={`rounded-md border p-0 transition ${
+                              isActive
+                                ? "border-neutral-900 ring-2 ring-neutral-300"
+                                : "border-neutral-200 hover:border-neutral-400"
+                            }`}
+                            aria-label={`Ver imagen ${idx + 1}`}
+                          >
+                            <img
+                              src={url}
+                              alt={`${listing.title} ${idx + 1}`}
+                              className="aspect-square w-full rounded-md object-cover"
+                              loading="lazy"
+                            />
+                          </button>
+                        );
+                      })}
+                    </div>
+                  ) : null}
+                </div>
               ) : (
                 <div
                   className="flex aspect-[16/10] w-full items-center justify-center rounded-lg border border-dashed border-neutral-300 bg-neutral-100 text-neutral-500"
@@ -223,6 +289,7 @@ export default function ListingDetailPage() {
                   >
                     Agregar a favoritos
                   </button>
+
                   <button
                     type="button"
                     onClick={() => void handleStartChat()}
@@ -231,6 +298,7 @@ export default function ListingDetailPage() {
                   >
                     {chatLoading ? "Cargando..." : "Iniciar chat"}
                   </button>
+
                   <button
                     type="button"
                     onClick={() => void handleReport()}
@@ -241,16 +309,42 @@ export default function ListingDetailPage() {
                   </button>
                 </>
               )}
+
               {isOwner && (
-                <button
-                  type="button"
-                  onClick={() => void handleDelete()}
-                  disabled={deleteLoading}
-                  className="rounded-md border border-red-300 bg-white px-4 py-2.5 text-sm font-medium text-red-700 transition hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-50"
-                >
-                  {deleteLoading ? "Eliminando..." : "Eliminar publicación"}
-                </button>
+                <>
+                  {listing.status === "available" ? (
+                    <button
+                      type="button"
+                      onClick={() => void handleUpdateState(1)}
+                      disabled={stateLoading}
+                      className="rounded-md border border-neutral-300 bg-white px-4 py-2.5 text-sm font-medium text-neutral-900 transition hover:bg-neutral-50 disabled:cursor-not-allowed disabled:opacity-50"
+                    >
+                      {stateLoading ? "Actualizando..." : "Marcar como reservado"}
+                    </button>
+                  ) : null}
+
+                  {listing.status === "reserved" ? (
+                    <button
+                      type="button"
+                      onClick={() => void handleUpdateState(2)}
+                      disabled={stateLoading}
+                      className="rounded-md bg-neutral-900 px-4 py-2.5 text-sm font-medium text-white transition hover:bg-neutral-800 disabled:cursor-not-allowed disabled:opacity-50"
+                    >
+                      {stateLoading ? "Actualizando..." : "Marcar como vendido"}
+                    </button>
+                  ) : null}
+
+                  <button
+                    type="button"
+                    onClick={() => void handleDelete()}
+                    disabled={deleteLoading}
+                    className="rounded-md border border-red-300 bg-white px-4 py-2.5 text-sm font-medium text-red-700 transition hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    {deleteLoading ? "Eliminando..." : "Eliminar publicación"}
+                  </button>
+                </>
               )}
+
               <button
                 type="button"
                 onClick={() => navigate("/listings")}

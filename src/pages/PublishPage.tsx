@@ -12,6 +12,8 @@ export default function PublishPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const navigate = useNavigate();
+  const [imageUrlInput, setImageUrlInput] = useState("");
+  const [imageUrls, setImageUrls] = useState<string[]>([]);
 
   const priceNumber = Number(price);
   const isPublishDisabled =
@@ -34,20 +36,44 @@ const CONDITION_IDS: Record<string, number> = {
   "Usado - Desgastado": 2,
 };
 
+  function isValidHttpUrl(url: string) {
+    return url.startsWith("http://") || url.startsWith("https://");
+  }
+
+  function addImageUrl() {
+    const url = imageUrlInput.trim();
+
+    if (!isValidHttpUrl(url)) {
+      setError("La URL debe empezar por http:// o https://");
+      return;
+    }
+    if (imageUrls.includes(url)) {
+      setError("Esa imagen ya fue agregada.");
+      return;
+    }
+
+    setImageUrls((prev) => [...prev, url]);
+    setImageUrlInput("");
+    setError("");
+  }
+
+  function removeImageUrl(url: string) {
+    setImageUrls((prev) => prev.filter((x) => x !== url));
+  }
+
   async function handleSubmit(e: FormEvent<HTMLFormElement>) {
   e.preventDefault();
   setError("");
   setLoading(true);
   try {
-    await createListing({
+       await createListing({
       title: title.trim(),
-      description,
-      category: CATEGORY_IDS[category] ?? CATEGORY_IDS["Libros"],
+      description: description.trim(),
+      categoryId: CATEGORY_IDS[category] ?? CATEGORY_IDS["Libros"],
       condition: CONDITION_IDS[condition] ?? 0,
       price: priceNumber,
-      location,
-      images: [],
-      status: "available",
+      location: location.trim(),
+      imageUrls,
     });
     navigate("/listings");
   } catch (err) {
@@ -189,6 +215,71 @@ const CONDITION_IDS: Record<string, number> = {
                 className="w-full rounded-md border border-neutral-300 px-3 py-2 text-neutral-900 shadow-sm outline-none focus:border-neutral-400 focus:ring-2 focus:ring-neutral-300"
                 disabled={loading}
               />
+            </div>
+                        <div>
+              <label className="mb-1 block text-sm font-medium text-neutral-800">
+                Imágenes (links) — mínimo 3
+              </label>
+
+              <div className="flex gap-2">
+                <input
+                  type="url"
+                  placeholder="https://..."
+                  value={imageUrlInput}
+                  onChange={(e) => setImageUrlInput(e.target.value)}
+                  className="w-full rounded-md border border-neutral-300 px-3 py-2 text-neutral-900 shadow-sm outline-none focus:border-neutral-400 focus:ring-2 focus:ring-neutral-300"
+                  disabled={loading}
+                />
+                <button
+                  type="button"
+                  onClick={addImageUrl}
+                  disabled={loading || imageUrlInput.trim() === ""}
+                  className="rounded-md bg-neutral-900 px-3 py-2 text-sm font-medium text-white transition enabled:hover:bg-neutral-800 disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  Agregar
+                </button>
+              </div>
+
+              <p className="mt-2 text-xs text-neutral-600">
+                Agregadas: {imageUrls.length}/3
+              </p>
+
+              {imageUrls.length > 0 ? (
+                <ul className="mt-2 space-y-2">
+                  {imageUrls.map((url) => (
+                    <li
+                      key={url}
+                      className="flex items-center justify-between gap-2 rounded-md border border-neutral-200 bg-neutral-50 p-2"
+                    >
+                      <div className="flex items-center gap-2 overflow-hidden">
+                        <img
+                          src={url}
+                          alt="preview"
+                          className="h-10 w-10 flex-none rounded object-cover"
+                          onError={(e) => {
+                            (e.currentTarget as HTMLImageElement).style.display = "none";
+                          }}
+                        />
+                        <span className="truncate text-xs text-neutral-800">{url}</span>
+                      </div>
+
+                      <button
+                        type="button"
+                        onClick={() => removeImageUrl(url)}
+                        className="flex-none rounded-md border border-neutral-300 bg-white px-2 py-1 text-xs text-neutral-900 hover:bg-neutral-100"
+                      >
+                        Quitar
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              ) : null}
+
+              {imageUrls.length > 0 && imageUrls.length < 3 ? (
+                <p className="mt-2 text-sm text-red-600">
+                  Debes agregar al menos 3 imágenes para publicar.
+                </p>
+              ) : null}
             </div>
           </div>
 
