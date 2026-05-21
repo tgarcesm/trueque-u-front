@@ -1,6 +1,7 @@
 import { type FormEvent, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { createListing } from "../api/listingsService.ts";
+import { ApiValidationError } from "../utils/apiErrors.ts";
 
 export default function PublishPage() {
   const [title, setTitle] = useState("");
@@ -10,7 +11,7 @@ export default function PublishPage() {
   const [price, setPrice] = useState("");
   const [location, setLocation] = useState("");
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
+  const [errorMessages, setErrorMessages] = useState<string[]>([]);
   const navigate = useNavigate();
   const [imageUrlInput, setImageUrlInput] = useState("");
   const [imageUrls, setImageUrls] = useState<string[]>([]);
@@ -53,17 +54,17 @@ const CONDITION_IDS: Record<string, number> = {
     const url = imageUrlInput.trim();
 
     if (!isValidHttpUrl(url)) {
-      setError("La URL debe empezar por http:// o https://");
+      setErrorMessages(["La URL debe empezar por http:// o https://"]);
       return;
     }
     if (imageUrls.includes(url)) {
-      setError("Esa imagen ya fue agregada.");
+      setErrorMessages(["Esa imagen ya fue agregada."]);
       return;
     }
 
     setImageUrls((prev) => [...prev, url]);
     setImageUrlInput("");
-    setError("");
+    setErrorMessages([]);
   }
 
   function removeImageUrl(url: string) {
@@ -72,11 +73,15 @@ const CONDITION_IDS: Record<string, number> = {
 
   async function handleSubmit(e: FormEvent<HTMLFormElement>) {
   e.preventDefault();
-  setError("");
+  setErrorMessages([]);
   if (priceError !== "") return;
+  if (imageUrls.length < 3) {
+    setErrorMessages(["Debes agregar al menos 3 imágenes para publicar."]);
+    return;
+  }
   setLoading(true);
   try {
-       await createListing({
+    await createListing({
       title: title.trim(),
       description: description.trim(),
       categoryId: CATEGORY_IDS[category] ?? CATEGORY_IDS["Libros"],
@@ -87,9 +92,13 @@ const CONDITION_IDS: Record<string, number> = {
     });
     navigate("/listings");
   } catch (err) {
-    setError(
-      err instanceof Error ? err.message : "No se pudo publicar el anuncio",
-    );
+    if (err instanceof ApiValidationError) {
+      setErrorMessages(err.messages);
+    } else {
+      setErrorMessages([
+        err instanceof Error ? err.message : "No se pudo publicar el anuncio",
+      ]);
+    }
   } finally {
     setLoading(false);
   }
@@ -308,10 +317,21 @@ const CONDITION_IDS: Record<string, number> = {
             </div>
           </div>
 
-          {error !== "" ? (
-            <p className="mt-4 text-sm text-red-600" role="alert">
-              {error}
-            </p>
+          {errorMessages.length > 0 ? (
+            <div
+              className="mt-4 rounded-xl bg-red-50 px-4 py-3 text-sm text-red-600"
+              role="alert"
+            >
+              {errorMessages.length === 1 ? (
+                <p>{errorMessages[0]}</p>
+              ) : (
+                <ul className="list-disc space-y-1 pl-5">
+                  {errorMessages.map((msg) => (
+                    <li key={msg}>{msg}</li>
+                  ))}
+                </ul>
+              )}
+            </div>
           ) : null}
 
           <button

@@ -1,4 +1,5 @@
 import type { Listing } from "../types/index.ts";
+import { ApiValidationError, parseErrorResponse } from "../utils/apiErrors.ts";
 import { API_URL, authFetch } from "./config.ts";
 
 export const CATEGORY_IDS: Record<string, string> = {
@@ -125,14 +126,11 @@ export async function createListing(data: CreateListingPayload) {
   });
 
   if (!res.ok) {
-    let msg = "No se pudo crear el anuncio";
-    try {
-      const err = await res.json();
-      msg = err?.message ?? JSON.stringify(err);
-    } catch {
-      // ignore
+    const messages = await parseErrorResponse(res);
+    if (messages.length > 0) {
+      throw new ApiValidationError(messages);
     }
-    throw new Error(msg);
+    throw new Error("No se pudo crear el anuncio");
   }
 
   return res.json();
