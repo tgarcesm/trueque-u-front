@@ -78,7 +78,7 @@ export default function ProfilePage() {
               <h2 className="mb-4 text-lg font-semibold text-neutral-900">
                 Información personal
               </h2>
-              <dl className="grid gap-4 sm:grid-cols-3">
+              <dl className="grid gap-4 sm:grid-cols-2">
                 <div>
                   <dt className="text-xs font-medium uppercase tracking-wide text-neutral-500">
                     Nombre completo
@@ -93,14 +93,6 @@ export default function ProfilePage() {
                   </dt>
                   <dd className="mt-1 text-base font-medium text-neutral-900">
                     {profile.programName || "—"}
-                  </dd>
-                </div>
-                <div>
-                  <dt className="text-xs font-medium uppercase tracking-wide text-neutral-500">
-                    Rating
-                  </dt>
-                  <dd className="mt-1 text-base font-medium text-indigo-600">
-                    ⭐ {profile.rating.toFixed(1)}
                   </dd>
                 </div>
               </dl>

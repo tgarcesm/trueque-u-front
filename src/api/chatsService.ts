@@ -36,6 +36,11 @@ export async function getMyChats(): Promise<ChatThread[]> {
   }
 }
 
+export async function getChatThread(chatId: string): Promise<ChatThread | null> {
+  const chats = await getMyChats();
+  return chats.find((c) => c.id === chatId) ?? null;
+}
+
 export async function getChatMessages(chatId: string): Promise<ChatMessage[]> {
   try {
     const res = await authFetch(`${API_URL}/chats/${chatId}/messages`);

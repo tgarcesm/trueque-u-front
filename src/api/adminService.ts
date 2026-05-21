@@ -1,29 +1,89 @@
+import type { Listing } from "../types/index.ts";
 import { API_URL, authFetch } from "./config.ts";
+
+const CATEGORY_NAMES: Record<string, string> = {
+  "bbbbbbbb-bbbb-bbbb-bbbb-000000000001": "Electrónica",
+  "bbbbbbbb-bbbb-bbbb-bbbb-000000000002": "Hogar",
+  "bbbbbbbb-bbbb-bbbb-bbbb-000000000003": "Ropa",
+  "bbbbbbbb-bbbb-bbbb-bbbb-000000000004": "Deportes",
+  "bbbbbbbb-bbbb-bbbb-bbbb-000000000005": "Libros",
+};
+
+const CONDITION_LABELS: Record<number, string> = {
+  0: "Nuevo",
+  1: "Como nuevo",
+  2: "Bueno",
+  3: "Regular",
+  4: "Malo",
+};
+
+export type AdminListing = Listing & {
+  isHidden: boolean;
+};
 
 export type AdminReport = {
   reportId: string;
   reporterId: string;
   targetType: "listing" | "user";
+  reportedListingId: string | null;
+  reportedUserId: string | null;
   reason: string;
   comment: string;
   createdAt: string;
 };
 
 function mapTargetType(value: unknown): AdminReport["targetType"] {
-  if (value === 0 || value === "Listing" || value === "listing") return "listing";
   if (value === 1 || value === "User" || value === "user") return "user";
+  if (value === 0 || value === "Listing" || value === "listing") return "listing";
   return "listing";
 }
 
 function mapReport(raw: Record<string, unknown>): AdminReport {
+  const listingId = raw.reportedListingId ?? raw.ReportedListingId;
+  const userId = raw.reportedUserId ?? raw.ReportedUserId;
   return {
     reportId: String(raw.reportId ?? raw.ReportId ?? ""),
     reporterId: String(raw.reporterId ?? raw.ReporterId ?? ""),
     targetType: mapTargetType(raw.targetType ?? raw.TargetType),
+    reportedListingId: listingId != null ? String(listingId) : null,
+    reportedUserId: userId != null ? String(userId) : null,
     reason: String(raw.reason ?? raw.Reason ?? ""),
     comment: String(raw.comment ?? raw.Comment ?? ""),
     createdAt: String(raw.createdAt ?? raw.CreatedAt ?? ""),
   };
+}
+
+function mapAdminListing(raw: Record<string, unknown>): AdminListing {
+  const state = raw.state ?? raw.State;
+  const condition = raw.condition ?? raw.Condition;
+  const images = raw.images ?? raw.Images;
+  return {
+    id: String(raw.listingId ?? raw.ListingId ?? ""),
+    title: String(raw.title ?? raw.Title ?? ""),
+    description: String(raw.description ?? raw.Description ?? ""),
+    price: Number(raw.price ?? raw.Price ?? 0),
+    location: String(raw.location ?? raw.Location ?? ""),
+    category:
+      CATEGORY_NAMES[String(raw.categoryId ?? raw.CategoryId ?? "")] ??
+      String(raw.categoryId ?? raw.CategoryId ?? ""),
+    condition: CONDITION_LABELS[Number(condition)] ?? "—",
+    status: state === 0 ? "available" : state === 1 ? "reserved" : "sold",
+    images: Array.isArray(images)
+      ? images.map((img) =>
+          String((img as Record<string, unknown>).imageUrl ?? (img as Record<string, unknown>).ImageUrl ?? ""),
+        )
+      : [],
+    sellerId: String(raw.userId ?? raw.UserId ?? ""),
+    isHidden: Boolean(raw.isHidden ?? raw.IsHidden),
+  };
+}
+
+export async function getAdminListings(): Promise<AdminListing[]> {
+  const res = await authFetch(`${API_URL}/api/Listings?pageSize=100`);
+  if (!res.ok) throw new Error("No se pudieron cargar las publicaciones");
+  const data = await res.json();
+  const items = Array.isArray(data) ? data : (data.items ?? []);
+  return (items as Record<string, unknown>[]).map(mapAdminListing);
 }
 
 export async function getAdminReports(): Promise<AdminReport[]> {

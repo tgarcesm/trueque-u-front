@@ -5,6 +5,7 @@ import {
   suspendUser,
   type AdminReport,
 } from "../api/adminService.ts";
+import CopyIdButton from "../components/CopyIdButton.tsx";
 
 type Tab = "reports" | "moderation";
 
@@ -17,7 +18,31 @@ const TAB_INACTIVE =
   "rounded-xl border border-neutral-200 bg-white px-4 py-2 text-sm font-medium text-neutral-700 transition hover:bg-neutral-50";
 
 function formatReportType(type: AdminReport["targetType"]): string {
-  return type === "listing" ? "Listing" : "Usuario";
+  return type === "listing" ? "Publicación" : "Usuario";
+}
+
+function prefillHideListing(
+  listingId: string,
+  reason: string,
+  setHideListingId: (v: string) => void,
+  setHideReason: (v: string) => void,
+  setTab: (t: Tab) => void,
+) {
+  setHideListingId(listingId);
+  setHideReason(reason);
+  setTab("moderation");
+}
+
+function prefillSuspendUser(
+  userId: string,
+  reason: string,
+  setSuspendUserId: (v: string) => void,
+  setSuspendReason: (v: string) => void,
+  setTab: (t: Tab) => void,
+) {
+  setSuspendUserId(userId);
+  setSuspendReason(reason);
+  setTab("moderation");
 }
 
 function formatDate(iso: string): string {
@@ -170,13 +195,15 @@ export default function AdminDashboardPage() {
               </p>
             ) : (
               <div className="overflow-x-auto">
-                <table className="w-full min-w-[640px] text-left text-sm">
+                <table className="w-full min-w-[900px] text-left text-sm">
                   <thead>
                     <tr className="border-b border-neutral-200 text-neutral-600">
                       <th className="px-3 py-3 font-semibold">Tipo</th>
+                      <th className="px-3 py-3 font-semibold">ID reportado</th>
                       <th className="px-3 py-3 font-semibold">Motivo</th>
                       <th className="px-3 py-3 font-semibold">Comentario</th>
                       <th className="px-3 py-3 font-semibold">Fecha</th>
+                      <th className="px-3 py-3 font-semibold">Acción</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -196,12 +223,62 @@ export default function AdminDashboardPage() {
                             {formatReportType(report.targetType)}
                           </span>
                         </td>
+                        <td className="px-3 py-3">
+                          {report.targetType === "listing" &&
+                          report.reportedListingId ? (
+                            <CopyIdButton id={report.reportedListingId} />
+                          ) : report.targetType === "user" &&
+                            report.reportedUserId ? (
+                            <CopyIdButton id={report.reportedUserId} />
+                          ) : (
+                            <span className="text-xs text-neutral-400">—</span>
+                          )}
+                        </td>
                         <td className="px-3 py-3 text-neutral-800">{report.reason}</td>
                         <td className="px-3 py-3 text-neutral-600 max-w-xs">
                           <span className="line-clamp-2">{report.comment}</span>
                         </td>
                         <td className="px-3 py-3 whitespace-nowrap text-neutral-600">
                           {formatDate(report.createdAt)}
+                        </td>
+                        <td className="px-3 py-3">
+                          {report.targetType === "listing" &&
+                          report.reportedListingId ? (
+                            <button
+                              type="button"
+                              onClick={() =>
+                                prefillHideListing(
+                                  report.reportedListingId!,
+                                  report.reason,
+                                  setHideListingId,
+                                  setHideReason,
+                                  setTab,
+                                )
+                              }
+                              className="rounded-lg border border-red-200 bg-red-50 px-3 py-1.5 text-xs font-medium text-red-700 transition hover:bg-red-100"
+                            >
+                              Ocultar listing
+                            </button>
+                          ) : report.targetType === "user" &&
+                            report.reportedUserId ? (
+                            <button
+                              type="button"
+                              onClick={() =>
+                                prefillSuspendUser(
+                                  report.reportedUserId!,
+                                  report.reason,
+                                  setSuspendUserId,
+                                  setSuspendReason,
+                                  setTab,
+                                )
+                              }
+                              className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-1.5 text-xs font-medium text-amber-800 transition hover:bg-amber-100"
+                            >
+                              Suspender usuario
+                            </button>
+                          ) : (
+                            <span className="text-xs text-neutral-400">—</span>
+                          )}
                         </td>
                       </tr>
                     ))}
@@ -213,12 +290,9 @@ export default function AdminDashboardPage() {
         ) : (
           <section className="grid gap-6 md:grid-cols-2">
             <article className="rounded-2xl bg-white p-6 shadow-sm">
-              <h2 className="mb-1 text-lg font-semibold text-neutral-900">
+              <h2 className="mb-4 text-lg font-semibold text-neutral-900">
                 Ocultar publicación
               </h2>
-              <p className="mb-4 text-sm text-neutral-500">
-                PATCH /admin/listings/&#123;id&#125;/hide
-              </p>
 
               <div className="space-y-4">
                 <div>
@@ -277,12 +351,9 @@ export default function AdminDashboardPage() {
             </article>
 
             <article className="rounded-2xl bg-white p-6 shadow-sm">
-              <h2 className="mb-1 text-lg font-semibold text-neutral-900">
+              <h2 className="mb-4 text-lg font-semibold text-neutral-900">
                 Suspender usuario
               </h2>
-              <p className="mb-4 text-sm text-neutral-500">
-                PATCH /admin/users/&#123;id&#125;/suspend
-              </p>
 
               <div className="space-y-4">
                 <div>

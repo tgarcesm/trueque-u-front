@@ -8,12 +8,13 @@ import ChatPage from './pages/ChatPage.tsx'
 import ChatsListPage from './pages/ChatsListPage.tsx'
 import FavoritesPage from './pages/FavoritesPage.tsx'
 import ListingDetailPage from './pages/ListingDetailPage.tsx'
-import ListingsPage from './pages/ListingsPage.tsx'
+import ListingsEntry from './components/ListingsEntry.tsx'
+import AdminListingsPage from './pages/AdminListingsPage.tsx'
 import LoginPage from './pages/LoginPage.tsx'
 import ProfilePage from './pages/ProfilePage.tsx'
 import PublishPage from './pages/PublishPage.tsx'
 import RegisterPage from './pages/RegisterPage.tsx'
-import { isAuthenticated } from './utils/auth.ts'
+import { isAdmin, isAuthenticated } from './utils/auth.ts'
 
 function Layout() {
   return (
@@ -25,7 +26,10 @@ function Layout() {
 }
 
 function RootRedirect() {
-  return <Navigate to={isAuthenticated() ? "/listings" : "/login"} replace />;
+  if (!isAuthenticated()) {
+    return <Navigate to="/login" replace />;
+  }
+  return <Navigate to={isAdmin() ? "/admin" : "/listings"} replace />;
 }
 
 function App() {
@@ -39,7 +43,7 @@ function App() {
         </Route>
         <Route element={<ProtectedRoute />}>
           <Route element={<Layout />}>
-            <Route path="/listings" element={<ListingsPage />} />
+            <Route path="/listings" element={<ListingsEntry />} />
             <Route path="/listings/:id" element={<ListingDetailPage />} />
             <Route path="/publish" element={<PublishPage />} />
             <Route path="/favorites" element={<FavoritesPage />} />
@@ -50,6 +54,7 @@ function App() {
           <Route element={<AdminRoute />}>
             <Route element={<Layout />}>
               <Route path="/admin" element={<AdminDashboardPage />} />
+              <Route path="/admin/listings" element={<AdminListingsPage />} />
             </Route>
           </Route>
         </Route>

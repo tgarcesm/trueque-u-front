@@ -12,6 +12,8 @@ function navLinkClass({ isActive }: { isActive: boolean }): string {
 
 export default function Navbar() {
   const navigate = useNavigate();
+  const admin = isAdmin();
+  const homePath = admin ? "/admin" : "/listings";
 
   function handleLogout() {
     clearToken();
@@ -22,28 +24,38 @@ export default function Navbar() {
     <header className="bg-gradient-to-r from-indigo-600 to-blue-500 shadow-lg px-4 py-3 md:px-8">
       <div className="mx-auto flex max-w-6xl items-center justify-between">
         <NavLink
-          to="/listings"
+          to={homePath}
           className="text-xl font-bold text-white tracking-tight transition hover:text-white/90"
         >
           🔄 TruequeU
         </NavLink>
         <nav aria-label="Principal">
-          <ul className="flex flex-row items-center gap-2">
+          <ul className="flex flex-row flex-wrap items-center gap-2">
             <li>
-              <NavLink to="/listings" className={navLinkClass}>
+              <NavLink to={homePath} className={navLinkClass} end={admin}>
                 Inicio
               </NavLink>
             </li>
-            <li>
-              <NavLink to="/publish" className={navLinkClass}>
-                Publicar
-              </NavLink>
-            </li>
-            <li>
-              <NavLink to="/favorites" className={navLinkClass}>
-                Favoritos
-              </NavLink>
-            </li>
+            {admin ? (
+              <li>
+                <NavLink to="/admin/listings" className={navLinkClass}>
+                  Publicaciones
+                </NavLink>
+              </li>
+            ) : (
+              <>
+                <li>
+                  <NavLink to="/publish" className={navLinkClass}>
+                    Publicar
+                  </NavLink>
+                </li>
+                <li>
+                  <NavLink to="/favorites" className={navLinkClass}>
+                    Favoritos
+                  </NavLink>
+                </li>
+              </>
+            )}
             <li>
               <NavLink
                 to="/chats"
@@ -56,16 +68,9 @@ export default function Navbar() {
             </li>
             <li>
               <NavLink to="/profile" className={navLinkClass}>
-                Mi perfil
+                {admin ? "Admin" : "Mi perfil"}
               </NavLink>
             </li>
-            {isAdmin() ? (
-              <li>
-                <NavLink to="/admin" className={navLinkClass}>
-                  Admin
-                </NavLink>
-              </li>
-            ) : null}
             <li>
               <button
                 type="button"
