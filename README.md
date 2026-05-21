@@ -1,7 +1,14 @@
 # TruequeU — Frontend
 
-[![Deployed on Vercel](https://img.shields.io/badge/Deployed%20on-Vercel-black?style=for-the-badge&logo=vercel)](https://trueque-u-front.vercel.app)
-
+<p>
+  <a href="https://trueque-u-front.vercel.app" target="_blank" rel="noopener noreferrer">
+    <img src="https://img.shields.io/badge/Deployed%20on-Vercel-black?style=for-the-badge&logo=vercel" alt="Deployed on Vercel" />
+  </a>
+  <br />
+  <a href="https://trueque-u-front.vercel.app" target="_blank" rel="noopener noreferrer">
+    <strong>👉 Oprime aquí para ver la web</strong>
+  </a>
+</p>
 
 ---
 
@@ -145,7 +152,15 @@ src/
 
 **https://trueque-u-front.vercel.app**
 
-[![Deployed on Vercel](https://img.shields.io/badge/Deployed%20on-Vercel-black?style=for-the-badge&logo=vercel)](https://trueque-u-front.vercel.app)
+<p>
+  <a href="https://trueque-u-front.vercel.app" target="_blank" rel="noopener noreferrer">
+    <img src="https://img.shields.io/badge/Deployed%20on-Vercel-black?style=for-the-badge&logo=vercel" alt="Deployed on Vercel" />
+  </a>
+  <br />
+  <a href="https://trueque-u-front.vercel.app" target="_blank" rel="noopener noreferrer">
+    <strong>👉 Oprime aquí para ver la demo en vivo</strong>
+  </a>
+</p>
 
 ---
 
