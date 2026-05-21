@@ -1,6 +1,6 @@
 import type { Listing } from "../types/index.ts";
 
-export const PAGE_BG = "min-h-screen bg-[#f8fafc]";
+export const PAGE_BG = "min-h-screen bg-[#f8fafc] overflow-x-hidden";
 export const CARD =
   "rounded-2xl bg-white shadow-lg shadow-slate-200/50 border border-slate-100";
 export const INPUT =

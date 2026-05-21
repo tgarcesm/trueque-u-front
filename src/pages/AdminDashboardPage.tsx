@@ -33,9 +33,9 @@ type Tab = "reports" | "moderation" | "users";
 const INPUT_CLASS = INPUT;
 
 const SIDEBAR_ACTIVE =
-  "w-full rounded-xl bg-gradient-to-r from-indigo-500 to-blue-500 px-4 py-3 text-left text-sm font-semibold text-white shadow-md shadow-indigo-500/25 transition duration-200";
+  "shrink-0 rounded-xl bg-gradient-to-r from-indigo-500 to-blue-500 px-4 py-2.5 text-sm font-semibold text-white shadow-md shadow-indigo-500/25 transition duration-200 lg:w-full lg:py-3 lg:text-left";
 const SIDEBAR_INACTIVE =
-  "w-full rounded-xl px-4 py-3 text-left text-sm font-medium text-slate-600 transition duration-200 hover:bg-slate-100 hover:text-indigo-600";
+  "shrink-0 rounded-xl px-4 py-2.5 text-sm font-medium text-slate-600 transition duration-200 hover:bg-slate-100 hover:text-indigo-600 lg:w-full lg:py-3 lg:text-left";
 
 function formatReportType(type: AdminReport["targetType"]): string {
   return type === 1 ? "Usuario" : "Publicación";
@@ -326,17 +326,17 @@ export default function AdminDashboardPage() {
   }
 
   return (
-    <main className={`${PAGE_BG} px-4 py-8`}>
-      <div className="mx-auto flex max-w-7xl flex-col gap-6 lg:flex-row lg:items-start">
+    <main className={`${PAGE_BG} px-3 py-6 sm:px-4 sm:py-8`}>
+      <div className="mx-auto flex max-w-7xl flex-col gap-4 sm:gap-6 lg:flex-row lg:items-start">
         <aside
-          className={`${CARD} w-full shrink-0 p-4 lg:w-64 lg:sticky lg:top-24`}
+          className={`${CARD} w-full shrink-0 p-3 sm:p-4 lg:w-64 lg:sticky lg:top-24`}
           aria-label="Menú del panel"
         >
-          <div className="mb-6 rounded-2xl bg-gradient-to-br from-indigo-700 to-blue-600 p-4 text-white">
-            <h1 className="text-lg font-bold">Panel admin</h1>
+          <div className="mb-4 rounded-2xl bg-gradient-to-br from-indigo-700 to-blue-600 p-4 text-white lg:mb-6">
+            <h1 className="text-base font-bold sm:text-lg">Panel admin</h1>
             <p className="mt-1 text-xs text-indigo-100">TruequeU</p>
           </div>
-          <nav className="flex flex-row gap-2 lg:flex-col">
+          <nav className="-mx-1 flex gap-2 overflow-x-auto pb-1 lg:mx-0 lg:flex-col lg:overflow-visible lg:pb-0">
             <button
               type="button"
               onClick={() => setTab("reports")}

@@ -6,6 +6,7 @@ import {
   getListings,
   type ListingsQueryParams,
 } from "../api/listingsService.ts";
+import { getUsersByIds, type UserProfile } from "../api/usersService.ts";
 import Spinner from "../components/Spinner.tsx";
 import { POLL_INTERVAL_MS } from "../utils/polling.ts";
 import { statusLabel } from "../utils/statusLabel.ts";
@@ -36,6 +37,7 @@ const FILTER_INPUT_CLASS =
 
 export default function ListingsPage() {
   const [listings, setListings] = useState<Listing[]>([]);
+  const [sellersById, setSellersById] = useState<Record<string, UserProfile>>({});
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [search, setSearch] = useState("");
@@ -108,12 +110,28 @@ export default function ListingsPage() {
     return () => window.clearInterval(intervalId);
   }, [fetchListings]);
 
+  useEffect(() => {
+    const sellerIds = listings.map((l) => l.sellerId).filter(Boolean);
+    if (sellerIds.length === 0) {
+      setSellersById({});
+      return;
+    }
+
+    let cancelled = false;
+    void getUsersByIds(sellerIds).then((map) => {
+      if (!cancelled) setSellersById(map);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [listings]);
+
   return (
-    <main className={`${PAGE_BG} px-4 py-8`}>
+    <main className={`${PAGE_BG} px-3 py-6 sm:px-4 sm:py-8`}>
       <div className="mx-auto max-w-6xl">
 
         <section className="mb-8 overflow-hidden rounded-3xl bg-gradient-to-br from-indigo-700 via-indigo-600 to-blue-600 p-6 text-white shadow-xl shadow-indigo-500/20 sm:p-8">
-          <h1 className="mb-1 text-3xl font-bold tracking-tight">
+          <h1 className="mb-1 text-2xl font-bold tracking-tight sm:text-3xl">
             Marketplace universitario 🎓
           </h1>
           <p className="mb-6 text-white/80 text-sm">
@@ -273,8 +291,12 @@ export default function ListingsPage() {
                         <h2 className="mb-2 line-clamp-2 text-base font-bold leading-snug text-slate-900">
                           {listing.title}
                         </h2>
-                        <p className="mb-4 text-2xl font-extrabold tracking-tight text-indigo-600">
+                        <p className="mb-1 text-2xl font-extrabold tracking-tight text-indigo-600">
                           {formatCop(listing.price)}
+                        </p>
+                        <p className="mb-4 text-sm font-medium text-slate-500">
+                          {sellersById[listing.sellerId]?.fullName?.trim() ||
+                            "Vendedor universitario"}
                         </p>
                         <div className="flex flex-wrap items-center gap-2">
                           <span className="rounded-full bg-indigo-50 px-3 py-1 text-xs font-semibold text-indigo-700">

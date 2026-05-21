@@ -141,8 +141,8 @@ export default function ChatPage() {
   }
 
   return (
-    <main className="flex min-h-[calc(100vh-4rem)] flex-col bg-[#f8fafc]">
-      <div className="mx-auto flex w-full max-w-2xl flex-1 flex-col shadow-xl">
+    <main className="flex min-h-[calc(100dvh-3.5rem)] flex-col bg-[#f8fafc] sm:min-h-[calc(100vh-4rem)]">
+      <div className="mx-auto flex w-full max-w-2xl flex-1 flex-col sm:shadow-xl">
         <header className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-200 bg-gradient-to-r from-indigo-700 to-blue-600 px-4 py-4 text-white shadow-md">
           <button
             type="button"

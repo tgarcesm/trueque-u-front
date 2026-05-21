@@ -1,6 +1,11 @@
 import { useCallback, useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { getAdminListings, hideListing, type AdminListing } from "../api/adminService.ts";
+import {
+  getAdminListings,
+  hideListing,
+  showListing,
+  type AdminListing,
+} from "../api/adminService.ts";
 import Spinner from "../components/Spinner.tsx";
 import { POLL_INTERVAL_MS } from "../utils/polling.ts";
 import { statusLabel } from "../utils/statusLabel.ts";
@@ -20,6 +25,7 @@ export default function AdminListingsPage() {
   const [error, setError] = useState("");
   const [actionMsg, setActionMsg] = useState("");
   const [hidingId, setHidingId] = useState<string | null>(null);
+  const [showingId, setShowingId] = useState<string | null>(null);
 
   const loadListings = useCallback(async (silent = false) => {
     if (!silent) {
@@ -53,6 +59,27 @@ export default function AdminListingsPage() {
     }, POLL_INTERVAL_MS);
     return () => window.clearInterval(intervalId);
   }, [loadListings]);
+
+  async function handleShow(listing: AdminListing) {
+    setShowingId(listing.id);
+    setActionMsg("");
+    setError("");
+    try {
+      await showListing(listing.id);
+      setListings((prev) =>
+        prev.map((l) =>
+          l.id === listing.id ? { ...l, isHidden: false } : l,
+        ),
+      );
+      setActionMsg(`"${listing.title}" reactivada correctamente.`);
+    } catch (err) {
+      setError(
+        err instanceof Error ? err.message : "No se pudo reactivar la publicación",
+      );
+    } finally {
+      setShowingId(null);
+    }
+  }
 
   async function handleHide(listing: AdminListing) {
     const reason = window.prompt("Motivo para ocultar la publicación:");
@@ -169,18 +196,27 @@ export default function AdminListingsPage() {
                       </span>
                     </td>
                     <td className="px-4 py-3">
-                      {!listing.isHidden ? (
-                        <button
-                          type="button"
-                          onClick={() => void handleHide(listing)}
-                          disabled={hidingId === listing.id}
-                          className="rounded-lg border border-red-200 bg-red-50 px-3 py-1.5 text-xs font-medium text-red-700 transition hover:bg-red-100 disabled:opacity-50"
-                        >
-                          {hidingId === listing.id ? "Ocultando..." : "Ocultar"}
-                        </button>
-                      ) : (
-                        <span className="text-xs text-neutral-400">—</span>
-                      )}
+                      <div className="flex flex-wrap gap-2">
+                        {listing.isHidden ? (
+                          <button
+                            type="button"
+                            onClick={() => void handleShow(listing)}
+                            disabled={showingId === listing.id}
+                            className="rounded-lg border border-green-200 bg-green-50 px-3 py-1.5 text-xs font-medium text-green-800 transition hover:bg-green-100 disabled:opacity-50"
+                          >
+                            {showingId === listing.id ? "Reactivando..." : "Reactivar"}
+                          </button>
+                        ) : (
+                          <button
+                            type="button"
+                            onClick={() => void handleHide(listing)}
+                            disabled={hidingId === listing.id}
+                            className="rounded-lg border border-red-200 bg-red-50 px-3 py-1.5 text-xs font-medium text-red-700 transition hover:bg-red-100 disabled:opacity-50"
+                          >
+                            {hidingId === listing.id ? "Ocultando..." : "Ocultar"}
+                          </button>
+                        )}
+                      </div>
                     </td>
                   </tr>
                 ))}

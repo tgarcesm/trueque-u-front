@@ -15,7 +15,7 @@ import { reportListing } from "../api/reportsService.ts";
 import { getUserById, type UserProfile } from "../api/usersService.ts";
 import Avatar from "../components/Avatar.tsx";
 import Spinner from "../components/Spinner.tsx";
-import { getCurrentUserId } from "../utils/auth.ts";
+import { getCurrentUserId, isAdmin } from "../utils/auth.ts";
 import { POLL_INTERVAL_MS } from "../utils/polling.ts";
 import {
   BTN_PRIMARY,
@@ -67,7 +67,7 @@ export default function ListingDetailPage() {
         setError("");
       }
       try {
-        const data = await getListingById(listingId);
+        const data = await getListingById(listingId, { useAuth: isAdmin() });
         setListing(data);
         if (!silent) setSelectedImageIndex(0);
         if (silent) setError("");
@@ -193,7 +193,7 @@ export default function ListingDetailPage() {
     setStateLoading(true);
     try {
       await updateListingState(id, newState);
-      const refreshed = await getListingById(id);
+      const refreshed = await getListingById(id, { useAuth: isAdmin() });
       setListing(refreshed);
     } catch (err) {
       setError(
@@ -205,7 +205,7 @@ export default function ListingDetailPage() {
   }
 
   return (
-    <main className={`${PAGE_BG} px-4 py-8`}>
+    <main className={`${PAGE_BG} px-3 py-6 sm:px-4 sm:py-8`}>
       <div className="mx-auto w-full max-w-6xl">
         {loading ? (
           <div className="flex justify-center py-24">
@@ -222,13 +222,13 @@ export default function ListingDetailPage() {
             <section aria-label="Galería" className="space-y-4 lg:sticky lg:top-24">
               {listing.images.length > 0 ? (
                 <div className="space-y-3">
-                  <div className="h-80 w-full overflow-hidden rounded-2xl border border-slate-200 bg-slate-100 shadow-lg">
+                  <div className="h-56 w-full overflow-hidden rounded-2xl border border-slate-200 bg-slate-100 shadow-lg sm:h-72 md:h-80">
                     <img
                       src={
                         listing.images[selectedImageIndex] ?? listing.images[0]
                       }
                       alt={listing.title}
-                      className="h-80 w-full object-cover"
+                      className="h-56 w-full object-cover sm:h-72 md:h-80"
                     />
                   </div>
 
@@ -270,7 +270,7 @@ export default function ListingDetailPage() {
                 </div>
               ) : (
                 <div
-                  className="flex h-80 w-full items-center justify-center rounded-2xl border border-dashed border-slate-300 bg-slate-100 text-slate-500"
+                  className="flex h-56 w-full items-center justify-center rounded-2xl border border-dashed border-slate-300 bg-slate-100 text-slate-500 sm:h-72 md:h-80"
                   role="img"
                   aria-label="Sin imagen"
                 >
@@ -280,18 +280,18 @@ export default function ListingDetailPage() {
             </section>
 
             <div className="space-y-6">
-              <section className={`${CARD} p-6 sm:p-8`}>
-                <div className="mb-4 flex flex-wrap items-start justify-between gap-3">
-                  <h1 className="text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">
+              <section className={`${CARD} p-4 sm:p-6 md:p-8`}>
+                <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-start sm:justify-between sm:gap-3">
+                  <h1 className="text-xl font-bold tracking-tight text-slate-900 sm:text-2xl md:text-3xl">
                     {listing.title}
                   </h1>
                   <span
-                    className={`rounded-full px-3 py-1 text-xs font-bold ${statusBadgeClass(listing.status)}`}
+                    className={`w-fit shrink-0 rounded-full px-3 py-1 text-xs font-bold ${statusBadgeClass(listing.status)}`}
                   >
                     {statusLabel(listing.status)}
                   </span>
                 </div>
-                <p className="mb-6 text-3xl font-extrabold text-indigo-600">
+                <p className="mb-6 text-2xl font-extrabold text-indigo-600 sm:text-3xl">
                   {formatCop(listing.price)}
                 </p>
                 <p className="mb-6 whitespace-pre-wrap leading-relaxed text-slate-600">
@@ -325,32 +325,33 @@ export default function ListingDetailPage() {
                 </dl>
               </section>
 
-              {!isOwner && seller ? (
-                <section className={`${CARD} flex items-center gap-4 p-5`}>
-                  <Avatar name={seller.fullName || "Usuario"} size="lg" />
-                  <div className="min-w-0 flex-1">
-                    <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
-                      Vendedor
-                    </p>
-                    <p className="truncate text-lg font-bold text-slate-900">
-                      {seller.fullName || "Usuario"}
-                    </p>
-                    <p className="text-sm text-slate-600">
-                      {seller.programName || "Programa no indicado"}
-                    </p>
-                    {seller.rating > 0 ? (
-                      <p className="mt-1 text-sm font-semibold text-amber-600">
-                        ★ {seller.rating.toFixed(1)}
-                      </p>
-                    ) : null}
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => navigate(`/users/${seller.id}`)}
-                    className="shrink-0 text-sm font-semibold text-indigo-600 transition hover:text-indigo-700"
-                  >
-                    Ver perfil
-                  </button>
+              {listing.sellerId ? (
+                <section className={`${CARD} p-4 sm:p-5`}>
+                  <h2 className="mb-4 text-lg font-bold text-slate-900">Vendedor</h2>
+                  {seller ? (
+                    <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
+                      <Avatar name={seller.fullName || "Usuario"} size="lg" />
+                      <div className="min-w-0 flex-1">
+                        <p className="text-lg font-bold text-slate-900">
+                          {seller.fullName || "Usuario"}
+                        </p>
+                        <p className="mt-1 text-sm text-slate-600">
+                          {seller.programName || "Programa no indicado"}
+                        </p>
+                      </div>
+                      {!isOwner ? (
+                        <button
+                          type="button"
+                          onClick={() => navigate(`/users/${seller.id}`)}
+                          className="w-full shrink-0 rounded-xl border border-indigo-200 bg-indigo-50 py-2.5 text-sm font-semibold text-indigo-600 transition hover:bg-indigo-100 sm:w-auto"
+                        >
+                          Ver perfil
+                        </button>
+                      ) : null}
+                    </div>
+                  ) : (
+                    <p className="text-sm text-slate-500">Cargando vendedor…</p>
+                  )}
                 </section>
               ) : null}
 
@@ -382,7 +383,7 @@ export default function ListingDetailPage() {
 
               <section
                 aria-label="Acciones"
-                className="flex flex-col gap-3 sm:flex-row sm:flex-wrap"
+                className="flex flex-col gap-3 sm:flex-row sm:flex-wrap [&_button]:w-full sm:[&_button]:w-auto"
               >
                 {!isOwner && (
                   <>

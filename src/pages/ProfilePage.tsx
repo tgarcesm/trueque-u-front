@@ -79,7 +79,7 @@ export default function ProfilePage() {
   }, [userId, loadProfile]);
 
   return (
-    <main className={`${PAGE_BG} px-4 py-8`}>
+    <main className={`${PAGE_BG} px-3 py-6 sm:px-4 sm:py-8`}>
       <div className="mx-auto max-w-4xl space-y-8">
         <section className="overflow-hidden rounded-3xl bg-gradient-to-br from-indigo-700 via-indigo-600 to-blue-600 p-6 text-white shadow-xl sm:p-8">
           <div className="flex flex-col gap-6 sm:flex-row sm:items-center">

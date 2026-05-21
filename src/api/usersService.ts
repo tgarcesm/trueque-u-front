@@ -24,3 +24,28 @@ export async function getUserById(userId: string): Promise<UserProfile> {
   const data = await res.json();
   return mapUserProfile(data as Record<string, unknown>);
 }
+
+/** Carga varios usuarios en paralelo (p. ej. vendedores de un listado). */
+export async function getUsersByIds(
+  userIds: string[],
+): Promise<Record<string, UserProfile>> {
+  const unique = [...new Set(userIds.map((id) => id.trim()).filter(Boolean))];
+  if (unique.length === 0) return {};
+
+  const results = await Promise.all(
+    unique.map(async (id) => {
+      try {
+        const user = await getUserById(id);
+        return { id, user } as const;
+      } catch {
+        return { id, user: null } as const;
+      }
+    }),
+  );
+
+  const map: Record<string, UserProfile> = {};
+  for (const { id, user } of results) {
+    if (user) map[id] = user;
+  }
+  return map;
+}

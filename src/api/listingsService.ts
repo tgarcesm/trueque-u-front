@@ -69,18 +69,29 @@ function buildListingsQuery(params?: ListingsQueryParams): string {
   return `?${searchParams.toString()}`;
 }
 
-function mapListing(l: any): Listing {
+function mapListing(raw: Record<string, unknown>): Listing {
+  const images = raw.images ?? raw.Images;
   return {
-    id: l.listingId,
-    title: l.title,
-    description: l.description,
-    price: l.price,
-    location: l.location,
-    category: CATEGORY_NAMES[l.categoryId] ?? l.categoryId,
-    condition: mapCondition(l.condition),
-    status: mapListingState(l.state),
-    images: Array.isArray(l.images) ? l.images.map((img: any) => img.imageUrl) : [],
-    sellerId: l.userId,
+    id: String(raw.id ?? raw.Id ?? raw.listingId ?? raw.ListingId ?? ""),
+    title: String(raw.title ?? raw.Title ?? ""),
+    description: String(raw.description ?? raw.Description ?? ""),
+    price: Number(raw.price ?? raw.Price ?? 0),
+    location: String(raw.location ?? raw.Location ?? ""),
+    category:
+      CATEGORY_NAMES[String(raw.categoryId ?? raw.CategoryId ?? "")] ??
+      String(raw.categoryId ?? raw.CategoryId ?? ""),
+    condition: mapCondition(raw.condition ?? raw.Condition),
+    status: mapListingState(raw.state ?? raw.State),
+    images: Array.isArray(images)
+      ? images.map((img) =>
+          String(
+            (img as Record<string, unknown>).imageUrl ??
+              (img as Record<string, unknown>).ImageUrl ??
+              "",
+          ),
+        )
+      : [],
+    sellerId: String(raw.userId ?? raw.UserId ?? raw.sellerId ?? raw.SellerId ?? ""),
   };
 }
 
@@ -97,12 +108,18 @@ export async function getListings(params?: ListingsQueryParams): Promise<Listing
   }
 }
 
-export async function getListingById(id: string): Promise<Listing> {
+export async function getListingById(
+  id: string,
+  options?: { useAuth?: boolean },
+): Promise<Listing> {
   try {
-    const res = await fetch(`${API_URL}/api/Listings/${id}`);
+    const useAuth = options?.useAuth ?? false;
+    const res = useAuth
+      ? await authFetch(`${API_URL}/api/Listings/${id}`)
+      : await fetch(`${API_URL}/api/Listings/${id}`);
     if (!res.ok) throw new Error("Anuncio no encontrado");
-    const l = await res.json();
-    return mapListing(l);
+    const data = await res.json();
+    return mapListing(data as Record<string, unknown>);
   } catch (error) {
     if (error instanceof Error) throw error;
     throw new Error("Anuncio no encontrado");

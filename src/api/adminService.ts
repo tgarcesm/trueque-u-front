@@ -75,7 +75,7 @@ function mapAdminListing(raw: Record<string, unknown>): AdminListing {
   const condition = raw.condition ?? raw.Condition;
   const images = raw.images ?? raw.Images;
   return {
-    id: String(raw.listingId ?? raw.ListingId ?? ""),
+    id: String(raw.id ?? raw.Id ?? raw.listingId ?? raw.ListingId ?? ""),
     title: String(raw.title ?? raw.Title ?? ""),
     description: String(raw.description ?? raw.Description ?? ""),
     price: Number(raw.price ?? raw.Price ?? 0),
@@ -90,17 +90,22 @@ function mapAdminListing(raw: Record<string, unknown>): AdminListing {
           String((img as Record<string, unknown>).imageUrl ?? (img as Record<string, unknown>).ImageUrl ?? ""),
         )
       : [],
-    sellerId: String(raw.userId ?? raw.UserId ?? ""),
+    sellerId: String(raw.userId ?? raw.UserId ?? raw.sellerId ?? raw.SellerId ?? ""),
     isHidden: Boolean(raw.isHidden ?? raw.IsHidden),
   };
 }
 
 export async function getAdminListings(): Promise<AdminListing[]> {
-  const res = await authFetch(`${API_URL}/api/Listings?pageSize=100`);
+  let res = await authFetch(`${API_URL}/admin/listings`);
+  if (!res.ok) {
+    res = await authFetch(`${API_URL}/api/Listings?pageSize=200`);
+  }
   if (!res.ok) throw new Error("No se pudieron cargar las publicaciones");
   const data = await res.json();
   const items = Array.isArray(data) ? data : (data.items ?? []);
-  return (items as Record<string, unknown>[]).map(mapAdminListing);
+  return (items as Record<string, unknown>[])
+    .map(mapAdminListing)
+    .filter((l) => l.id.trim() !== "");
 }
 
 function mapAdminUser(raw: Record<string, unknown>): AdminUser {
