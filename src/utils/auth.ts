@@ -51,6 +51,18 @@ export function getCurrentUserId(): string {
   return typeof id === "string" ? id : "";
 }
 
+export function getCurrentUserEmail(): string {
+  const token = getToken();
+  if (!token || isTokenExpired(token)) return "";
+  const payload = decodeTokenPayload(token);
+  if (!payload) return "";
+  const email =
+    payload["http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress"] ??
+    payload.email ??
+    payload.Email;
+  return typeof email === "string" ? email : "";
+}
+
 export function getUserRole(): string {
   const token = getToken();
   if (!token || isTokenExpired(token)) return "";

@@ -1,11 +1,15 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { getListings } from "../api/listingsService.ts";
-import { getUserById, type UserProfile } from "../api/usersService.ts";
+import {
+  getAuthenticatedUserById,
+  getUserById,
+  type UserProfile,
+} from "../api/usersService.ts";
 import type { Listing } from "../types/index.ts";
 import Avatar from "../components/Avatar.tsx";
 import Spinner from "../components/Spinner.tsx";
-import { getCurrentUserId } from "../utils/auth.ts";
+import { getCurrentUserEmail, getCurrentUserId } from "../utils/auth.ts";
 import { POLL_INTERVAL_MS } from "../utils/polling.ts";
 import { statusLabel } from "../utils/statusLabel.ts";
 import { CARD, formatCop, PAGE_BG, statusBadgeClass } from "../utils/ui.ts";
@@ -43,11 +47,18 @@ export default function ProfilePage() {
         setError("");
       }
       try {
+        const fetchUser = isOwnProfile
+          ? getAuthenticatedUserById(userId)
+          : getUserById(userId);
         const [userData, allListings] = await Promise.all([
-          getUserById(userId),
+          fetchUser,
           getListings({ pageSize: 100 }),
         ]);
-        setProfile(userData);
+        setProfile(
+          isOwnProfile && !userData.email.trim()
+            ? { ...userData, email: getCurrentUserEmail() }
+            : userData,
+        );
         setListings(allListings.filter((l) => l.sellerId === userId));
         if (silent) setError("");
       } catch (err) {
@@ -62,7 +73,7 @@ export default function ProfilePage() {
         if (!silent) setLoading(false);
       }
     },
-    [userId],
+    [userId, isOwnProfile],
   );
 
   useEffect(() => {
@@ -94,11 +105,9 @@ export default function ProfilePage() {
             )}
             <div className="min-w-0 flex-1">
               <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">
-                {isOwnProfile ? "Mi perfil" : profile?.fullName || "Perfil"}
+                {profile?.fullName?.trim() ||
+                  (isOwnProfile ? "Mi perfil" : "Perfil")}
               </h1>
-              <p className="mt-1 text-indigo-100">
-                {profile?.programName || "Programa académico"}
-              </p>
               {profile && profile.rating > 0 ? (
                 <p className="mt-2 text-lg font-semibold text-amber-200">
                   ★ {profile.rating.toFixed(1)} de reputación
@@ -143,19 +152,57 @@ export default function ProfilePage() {
               </article>
             </section>
 
-            {!isOwnProfile ? (
-              <section className={`${CARD} p-6`}>
-                <span
-                  className={`inline-flex rounded-full px-3 py-1 text-xs font-bold ${
-                    profile.isSuspended
-                      ? "bg-red-100 text-red-800"
-                      : "bg-emerald-100 text-emerald-800"
-                  }`}
-                >
-                  {profile.isSuspended ? "Cuenta suspendida" : "Cuenta activa"}
-                </span>
-              </section>
-            ) : null}
+            <section className={`${CARD} p-6`}>
+              <h2 className="mb-4 text-lg font-bold text-slate-900">
+                {isOwnProfile ? "Mi información" : "Información"}
+              </h2>
+              <dl className="grid gap-4 sm:grid-cols-2">
+                <div>
+                  <dt className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                    Nombre
+                  </dt>
+                  <dd className="mt-1 font-medium text-slate-900">
+                    {profile.fullName?.trim() || "—"}
+                  </dd>
+                </div>
+                {isOwnProfile ? (
+                  <div>
+                    <dt className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                      Correo
+                    </dt>
+                    <dd className="mt-1 font-medium text-slate-900">
+                      {profile.email?.trim() || "—"}
+                    </dd>
+                  </div>
+                ) : null}
+                <div>
+                  <dt className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                    Programa
+                  </dt>
+                  <dd className="mt-1 font-medium text-slate-900">
+                    {profile.programName?.trim() || "—"}
+                  </dd>
+                </div>
+                {!isOwnProfile ? (
+                  <div>
+                    <dt className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                      Estado
+                    </dt>
+                    <dd className="mt-1">
+                      <span
+                        className={`inline-flex rounded-full px-3 py-1 text-xs font-bold ${
+                          profile.isSuspended
+                            ? "bg-red-100 text-red-800"
+                            : "bg-emerald-100 text-emerald-800"
+                        }`}
+                      >
+                        {profile.isSuspended ? "Cuenta suspendida" : "Cuenta activa"}
+                      </span>
+                    </dd>
+                  </div>
+                ) : null}
+              </dl>
+            </section>
 
             <section className={`${CARD} p-6`}>
               <div className="mb-4 flex items-center justify-between gap-4">

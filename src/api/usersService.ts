@@ -3,6 +3,7 @@ import { API_URL, apiFetch, authFetch } from "./config.ts";
 export type UserProfile = {
   id: string;
   fullName: string;
+  email: string;
   programName: string;
   rating: number;
   isSuspended: boolean;
@@ -10,8 +11,11 @@ export type UserProfile = {
 
 function mapUserProfile(raw: Record<string, unknown>): UserProfile {
   return {
-    id: String(raw.id ?? raw.Id ?? ""),
-    fullName: String(raw.fullName ?? raw.FullName ?? ""),
+    id: String(raw.id ?? raw.Id ?? raw.userId ?? raw.UserId ?? ""),
+    fullName: String(
+      raw.fullName ?? raw.FullName ?? raw.name ?? raw.Name ?? "",
+    ),
+    email: String(raw.email ?? raw.Email ?? ""),
     programName: String(raw.programName ?? raw.ProgramName ?? ""),
     rating: Number(raw.rating ?? raw.Rating ?? 0),
     isSuspended: Boolean(raw.isSuspended ?? raw.IsSuspended),
