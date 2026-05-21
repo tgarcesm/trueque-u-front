@@ -122,6 +122,53 @@ export async function getAdminUsers(): Promise<AdminUser[]> {
   return (items as Record<string, unknown>[]).map(mapAdminUser);
 }
 
+export type CreateAdminUserPayload = {
+  fullName: string;
+  email: string;
+  password: string;
+  programName: string;
+  role: "User" | "Admin";
+};
+
+async function parseAdminError(
+  res: Response,
+  fallback: string,
+): Promise<string> {
+  try {
+    const err = await res.json();
+    return (err as { message?: string }).message ?? fallback;
+  } catch {
+    return fallback;
+  }
+}
+
+export async function createUser(
+  payload: CreateAdminUserPayload,
+): Promise<AdminUser> {
+  const res = await authFetch(`${API_URL}/admin/users`, {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+  if (!res.ok) {
+    throw new Error(
+      await parseAdminError(res, "No se pudo crear el usuario"),
+    );
+  }
+  const data = await res.json();
+  return mapAdminUser(data as Record<string, unknown>);
+}
+
+export async function deleteUser(userId: string): Promise<void> {
+  const res = await authFetch(`${API_URL}/admin/users/${userId}`, {
+    method: "DELETE",
+  });
+  if (!res.ok) {
+    throw new Error(
+      await parseAdminError(res, "No se pudo eliminar el usuario"),
+    );
+  }
+}
+
 export async function getAdminReports(): Promise<AdminReport[]> {
   const res = await authFetch(`${API_URL}/admin/reports`);
   if (!res.ok) throw new Error("No se pudieron cargar los reportes");

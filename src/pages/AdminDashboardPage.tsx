@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import {
+  createUser,
+  deleteUser,
   getAdminReports,
   getAdminUsers,
   hideListing,
@@ -9,7 +11,9 @@ import {
   unsuspendUser,
   type AdminReport,
   type AdminUser,
+  type CreateAdminUserPayload,
 } from "../api/adminService.ts";
+import AdminCreateUserModal from "../components/AdminCreateUserModal.tsx";
 import CopyIdButton from "../components/CopyIdButton.tsx";
 import ReportListingAction from "../components/ReportListingAction.tsx";
 import ReportUserAction from "../components/ReportUserAction.tsx";
@@ -73,6 +77,10 @@ export default function AdminDashboardPage() {
   const [usersError, setUsersError] = useState("");
   const [userActionId, setUserActionId] = useState<string | null>(null);
   const [userRowError, setUserRowError] = useState("");
+  const [createUserModalOpen, setCreateUserModalOpen] = useState(false);
+  const [createUserLoading, setCreateUserLoading] = useState(false);
+  const [createUserError, setCreateUserError] = useState("");
+  const [deletingUserId, setDeletingUserId] = useState<string | null>(null);
 
   const fetchReports = useCallback(async (silent = false) => {
     if (!silent) {
@@ -141,6 +149,42 @@ export default function AdminDashboardPage() {
     }, POLL_INTERVAL_MS);
     return () => window.clearInterval(intervalId);
   }, [tab, fetchUsers]);
+
+  async function handleCreateUser(payload: CreateAdminUserPayload) {
+    setCreateUserLoading(true);
+    setCreateUserError("");
+    try {
+      await createUser(payload);
+      setCreateUserModalOpen(false);
+      await fetchUsers(true);
+    } catch (err) {
+      setCreateUserError(
+        err instanceof Error ? err.message : "No se pudo crear el usuario",
+      );
+    } finally {
+      setCreateUserLoading(false);
+    }
+  }
+
+  async function handleDeleteUser(user: AdminUser) {
+    const confirmed = window.confirm(
+      "¿Estás seguro de eliminar este usuario?",
+    );
+    if (!confirmed) return;
+
+    setDeletingUserId(user.id);
+    setUserRowError("");
+    try {
+      await deleteUser(user.id);
+      await fetchUsers(true);
+    } catch (err) {
+      setUserRowError(
+        err instanceof Error ? err.message : "No se pudo eliminar el usuario",
+      );
+    } finally {
+      setDeletingUserId(null);
+    }
+  }
 
   async function handleToggleAdminUser(user: AdminUser) {
     setUserActionId(user.id);
@@ -418,7 +462,19 @@ export default function AdminDashboardPage() {
           </section>
         ) : tab === "users" ? (
           <section className="rounded-2xl bg-white p-6 shadow-sm">
-            <h2 className="mb-4 text-lg font-semibold text-neutral-900">Usuarios</h2>
+            <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+              <h2 className="text-lg font-semibold text-neutral-900">Usuarios</h2>
+              <button
+                type="button"
+                onClick={() => {
+                  setCreateUserError("");
+                  setCreateUserModalOpen(true);
+                }}
+                className="rounded-xl bg-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-indigo-700"
+              >
+                Crear usuario
+              </button>
+            </div>
 
             {usersLoading ? (
               <div className="flex justify-center py-12">
@@ -440,7 +496,7 @@ export default function AdminDashboardPage() {
                   </p>
                 ) : null}
                 <div className="overflow-x-auto">
-                  <table className="w-full min-w-[800px] text-left text-sm">
+                  <table className="w-full min-w-[900px] text-left text-sm">
                     <thead>
                       <tr className="border-b border-neutral-200 text-neutral-600">
                         <th className="px-3 py-3 font-semibold">Nombre</th>
@@ -448,7 +504,7 @@ export default function AdminDashboardPage() {
                         <th className="px-3 py-3 font-semibold">Programa</th>
                         <th className="px-3 py-3 font-semibold">Rating</th>
                         <th className="px-3 py-3 font-semibold">Estado</th>
-                        <th className="px-3 py-3 font-semibold">Acción</th>
+                        <th className="px-3 py-3 font-semibold">Acciones</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -481,22 +537,40 @@ export default function AdminDashboardPage() {
                             </span>
                           </td>
                           <td className="px-3 py-3">
-                            <button
-                              type="button"
-                              onClick={() => void handleToggleAdminUser(user)}
-                              disabled={userActionId === user.id}
-                              className={
-                                user.isSuspended
-                                  ? "rounded-lg border border-green-200 bg-green-50 px-3 py-1.5 text-xs font-medium text-green-800 transition hover:bg-green-100 disabled:opacity-50"
-                                  : "rounded-lg border border-amber-200 bg-amber-50 px-3 py-1.5 text-xs font-medium text-amber-800 transition hover:bg-amber-100 disabled:opacity-50"
-                              }
-                            >
-                              {userActionId === user.id
-                                ? "Procesando…"
-                                : user.isSuspended
-                                  ? "Reactivar"
-                                  : "Suspender"}
-                            </button>
+                            <div className="flex flex-wrap items-center gap-2">
+                              <button
+                                type="button"
+                                onClick={() => void handleToggleAdminUser(user)}
+                                disabled={
+                                  userActionId === user.id ||
+                                  deletingUserId === user.id
+                                }
+                                className={
+                                  user.isSuspended
+                                    ? "rounded-lg border border-green-200 bg-green-50 px-3 py-1.5 text-xs font-medium text-green-800 transition hover:bg-green-100 disabled:opacity-50"
+                                    : "rounded-lg border border-amber-200 bg-amber-50 px-3 py-1.5 text-xs font-medium text-amber-800 transition hover:bg-amber-100 disabled:opacity-50"
+                                }
+                              >
+                                {userActionId === user.id
+                                  ? "Procesando…"
+                                  : user.isSuspended
+                                    ? "Reactivar"
+                                    : "Suspender"}
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => void handleDeleteUser(user)}
+                                disabled={
+                                  deletingUserId === user.id ||
+                                  userActionId === user.id
+                                }
+                                className="rounded-lg border border-red-200 bg-red-50 px-3 py-1.5 text-xs font-medium text-red-700 transition hover:bg-red-100 disabled:opacity-50"
+                              >
+                                {deletingUserId === user.id
+                                  ? "Eliminando…"
+                                  : "Eliminar"}
+                              </button>
+                            </div>
                           </td>
                         </tr>
                       ))}
@@ -505,6 +579,19 @@ export default function AdminDashboardPage() {
                 </div>
               </>
             )}
+
+            <AdminCreateUserModal
+              open={createUserModalOpen}
+              loading={createUserLoading}
+              error={createUserError}
+              onClose={() => {
+                if (!createUserLoading) {
+                  setCreateUserModalOpen(false);
+                  setCreateUserError("");
+                }
+              }}
+              onSubmit={handleCreateUser}
+            />
           </section>
         ) : (
           <section className="grid gap-6 md:grid-cols-2 xl:grid-cols-4">
