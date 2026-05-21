@@ -1,7 +1,7 @@
 import type { Listing } from "../types/index.ts";
 import { ApiValidationError, parseErrorResponse } from "../utils/apiErrors.ts";
 import { getToken } from "../utils/auth.ts";
-import { API_URL, authFetch } from "./config.ts";
+import { API_URL, apiFetch, authFetch } from "./config.ts";
 
 export const CATEGORY_IDS: Record<string, string> = {
   Electrónica: "bbbbbbbb-bbbb-bbbb-bbbb-000000000001",
@@ -101,7 +101,7 @@ export async function getListings(params?: ListingsQueryParams): Promise<Listing
   try {
     const res = getToken()
       ? await authFetch(`${API_URL}/api/Listings${buildListingsQuery(params)}`)
-      : await fetch(`${API_URL}/api/Listings${buildListingsQuery(params)}`);
+      : await apiFetch(`${API_URL}/api/Listings${buildListingsQuery(params)}`);
     if (!res.ok) throw new Error("No se pudieron obtener los anuncios");
     const data = await res.json();
     const items = Array.isArray(data) ? data : (data.items ?? []);
@@ -120,7 +120,7 @@ export async function getListingById(
     const useAuth = options?.useAuth ?? false;
     const res = useAuth
       ? await authFetch(`${API_URL}/api/Listings/${id}`)
-      : await fetch(`${API_URL}/api/Listings/${id}`);
+      : await apiFetch(`${API_URL}/api/Listings/${id}`);
     if (!res.ok) throw new Error("Anuncio no encontrado");
     const data = await res.json();
     return mapListing(data as Record<string, unknown>);

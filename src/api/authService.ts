@@ -1,13 +1,13 @@
 import type { User } from "../types/index.ts";
 import { parseErrorResponse } from "../utils/apiErrors.ts";
 import { setToken } from "../utils/auth.ts";
-import { API_URL } from "./config.ts";
+import { API_URL, apiFetch } from "./config.ts";
 
 const SUSPENDED_MESSAGE = "Tu cuenta está suspendida";
 
 export async function login(email: string, password: string): Promise<User> {
   try {
-    const res = await fetch(`${API_URL}/auth/login`, {
+    const res = await apiFetch(`${API_URL}/auth/login`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ email, password }),
@@ -40,7 +40,7 @@ export async function register(
   programName: string,
 ): Promise<User> {
   try {
-    const res = await fetch(`${API_URL}/auth/register`, {
+    const res = await apiFetch(`${API_URL}/auth/register`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
