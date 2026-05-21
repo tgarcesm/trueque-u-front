@@ -8,6 +8,7 @@ import {
 } from "../api/chatsService.ts";
 import { reportUser } from "../api/reportsService.ts";
 import ReportModal from "../components/ReportModal.tsx";
+import Spinner from "../components/Spinner.tsx";
 import { getCurrentUserId } from "../utils/auth.ts";
 import { CHAT_POLL_INTERVAL_MS } from "../utils/polling.ts";
 
@@ -140,16 +141,21 @@ export default function ChatPage() {
   }
 
   return (
-    <main className="flex min-h-screen flex-col bg-neutral-100">
-      <div className="mx-auto flex w-full max-w-2xl flex-1 flex-col">
-        <div className="flex flex-wrap items-center justify-between gap-2 border-b border-neutral-200 bg-white px-4 py-3 shadow-sm">
+    <main className="flex min-h-[calc(100vh-4rem)] flex-col bg-[#f8fafc]">
+      <div className="mx-auto flex w-full max-w-2xl flex-1 flex-col shadow-xl">
+        <header className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-200 bg-gradient-to-r from-indigo-700 to-blue-600 px-4 py-4 text-white shadow-md">
           <button
             type="button"
             onClick={() => navigate("/chats")}
-            className="rounded-md border border-neutral-300 bg-white px-3 py-1.5 text-sm font-medium text-neutral-900 transition hover:bg-neutral-50"
+            className="rounded-xl bg-white/15 px-3 py-2 text-sm font-semibold transition duration-200 hover:bg-white/25"
           >
-            ← Mis chats
+            ← Chats
           </button>
+          <div className="min-w-0 flex-1 px-2 text-center">
+            <p className="truncate text-sm font-bold">
+              {thread?.listingTitle || "Conversación"}
+            </p>
+          </div>
           {otherUserId ? (
             <button
               type="button"
@@ -158,15 +164,17 @@ export default function ChatPage() {
                 setReportMsg("");
                 setReportModalOpen(true);
               }}
-              className="rounded-md border border-red-300 bg-white px-3 py-1.5 text-sm font-medium text-red-700 transition hover:bg-red-50"
+              className="rounded-xl border border-white/30 bg-white/10 px-3 py-2 text-sm font-medium transition hover:bg-white/20"
             >
-              Reportar usuario
+              Reportar
             </button>
-          ) : null}
-        </div>
+          ) : (
+            <span className="w-20" />
+          )}
+        </header>
 
         {reportMsg !== "" ? (
-          <p className="bg-green-50 px-4 py-2 text-sm text-green-700" role="status">
+          <p className="bg-emerald-50 px-4 py-2 text-sm text-emerald-700" role="status">
             {reportMsg}
           </p>
         ) : null}
@@ -176,9 +184,11 @@ export default function ChatPage() {
           </p>
         ) : null}
 
-        <div className="relative flex min-h-0 flex-1 flex-col">
+        <div className="relative flex min-h-0 flex-1 flex-col tu-chat-bg">
           {loading ? (
-            <p className="p-4 text-neutral-700">Cargando...</p>
+            <div className="flex flex-1 items-center justify-center p-8">
+              <Spinner />
+            </div>
           ) : error !== "" ? (
             <p className="p-4 text-red-600" role="alert">
               {error}
@@ -186,11 +196,11 @@ export default function ChatPage() {
           ) : (
             <section
               aria-label="Mensajes"
-              className="flex-1 space-y-3 overflow-y-auto px-4 py-4 pb-28"
+              className="flex-1 space-y-2 overflow-y-auto px-4 py-5 pb-28"
             >
               {messages.length === 0 ? (
-                <p className="text-center text-neutral-600">
-                  No hay mensajes aún
+                <p className="text-center text-sm text-slate-500">
+                  No hay mensajes aún. ¡Envía el primero!
                 </p>
               ) : (
                 messages.map((message) => {
@@ -203,11 +213,11 @@ export default function ChatPage() {
                       <div
                         className={
                           isOwn
-                            ? "max-w-[min(85%,24rem)] rounded-2xl rounded-br-md bg-blue-600 px-4 py-2.5 text-white shadow-sm"
-                            : "max-w-[min(85%,24rem)] rounded-2xl rounded-bl-md bg-neutral-200 px-4 py-2.5 text-neutral-900 shadow-sm"
+                            ? "max-w-[min(85%,20rem)] rounded-2xl rounded-br-sm bg-gradient-to-br from-indigo-500 to-blue-500 px-4 py-2.5 text-white shadow-md shadow-indigo-500/20"
+                            : "max-w-[min(85%,20rem)] rounded-2xl rounded-bl-sm border border-slate-200/80 bg-white px-4 py-2.5 text-slate-800 shadow-sm"
                         }
                       >
-                        <p className="whitespace-pre-wrap break-words text-sm leading-snug">
+                        <p className="whitespace-pre-wrap break-words text-sm leading-relaxed">
                           {message.content}
                         </p>
                       </div>
@@ -218,7 +228,7 @@ export default function ChatPage() {
             </section>
           )}
 
-          <div className="sticky bottom-0 border-t border-neutral-200 bg-white px-4 py-3 shadow-[0_-4px_16px_-4px_rgba(0,0,0,0.06)]">
+          <div className="sticky bottom-0 border-t border-slate-200 bg-white/95 px-4 py-3 backdrop-blur-sm">
             <form
               className="flex gap-2"
               onSubmit={(e) => void handleSend(e)}
@@ -230,16 +240,16 @@ export default function ChatPage() {
                 value={newMessage}
                 onChange={(e) => setNewMessage(e.target.value)}
                 placeholder="Escribe un mensaje…"
-                className="min-w-0 flex-1 rounded-full border border-neutral-300 px-4 py-2 text-sm text-neutral-900 outline-none focus:border-neutral-400 focus:ring-2 focus:ring-neutral-200"
+                className="min-w-0 flex-1 rounded-full border border-slate-200 bg-slate-50 px-5 py-3 text-sm text-slate-900 outline-none transition focus:border-indigo-400 focus:bg-white focus:ring-2 focus:ring-indigo-100"
                 autoComplete="off"
                 aria-label="Nuevo mensaje"
               />
               <button
                 type="submit"
                 disabled={isSendDisabled}
-                className="shrink-0 rounded-full bg-neutral-900 px-5 py-2 text-sm font-medium text-white transition enabled:hover:bg-neutral-800 disabled:cursor-not-allowed disabled:opacity-50"
+                className="shrink-0 rounded-full bg-gradient-to-r from-indigo-500 to-blue-500 px-6 py-3 text-sm font-bold text-white shadow-md transition duration-200 hover:shadow-lg disabled:cursor-not-allowed disabled:opacity-50"
               >
-                {sending ? "Enviando..." : "Enviar"}
+                {sending ? "…" : "Enviar"}
               </button>
             </form>
           </div>

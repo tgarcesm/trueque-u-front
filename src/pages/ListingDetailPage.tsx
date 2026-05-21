@@ -12,8 +12,19 @@ import { statusLabel } from "../utils/statusLabel.ts";
 import { getOwnerStateActions } from "../utils/listingStateActions.ts";
 import ReportListingModal from "../components/ReportListingModal.tsx";
 import { reportListing } from "../api/reportsService.ts";
+import { getUserById, type UserProfile } from "../api/usersService.ts";
+import Avatar from "../components/Avatar.tsx";
+import Spinner from "../components/Spinner.tsx";
 import { getCurrentUserId } from "../utils/auth.ts";
 import { POLL_INTERVAL_MS } from "../utils/polling.ts";
+import {
+  BTN_PRIMARY,
+  BTN_SECONDARY,
+  CARD,
+  formatCop,
+  PAGE_BG,
+  statusBadgeClass,
+} from "../utils/ui.ts";
 
 export default function ListingDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -34,6 +45,7 @@ export default function ListingDetailPage() {
 
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
   const [stateLoading, setStateLoading] = useState(false);
+  const [seller, setSeller] = useState<UserProfile | null>(null);
 
   const currentUserId = getCurrentUserId();
   const isOwner = listing?.sellerId === currentUserId;
@@ -92,6 +104,17 @@ export default function ListingDetailPage() {
     }, POLL_INTERVAL_MS);
     return () => window.clearInterval(intervalId);
   }, [id, fetchListing]);
+
+  useEffect(() => {
+    const sellerId = listing?.sellerId?.trim();
+    if (!sellerId) {
+      setSeller(null);
+      return;
+    }
+    void getUserById(sellerId)
+      .then(setSeller)
+      .catch(() => setSeller(null));
+  }, [listing?.sellerId]);
 
   async function handleAddFavorite() {
     if (!id) return;
@@ -182,22 +205,24 @@ export default function ListingDetailPage() {
   }
 
   return (
-    <main className="min-h-screen bg-neutral-50 px-4 py-8">
-      <div className="mx-auto w-full max-w-2xl">
+    <main className={`${PAGE_BG} px-4 py-8`}>
+      <div className="mx-auto w-full max-w-6xl">
         {loading ? (
-          <p className="text-neutral-700">Cargando...</p>
+          <div className="flex justify-center py-24">
+            <Spinner />
+          </div>
         ) : error !== "" ? (
-          <p className="text-red-600" role="alert">
+          <p className="rounded-2xl border border-red-100 bg-red-50 p-6 text-red-700" role="alert">
             {error}
           </p>
         ) : listing === null ? (
-          <p className="text-neutral-700">Publicación no encontrada</p>
+          <p className="text-slate-600">Publicación no encontrada</p>
         ) : (
-          <>
-            <section aria-label="Detalle del anuncio" className="space-y-6">
+          <div className="grid gap-8 lg:grid-cols-2 lg:items-start">
+            <section aria-label="Galería" className="space-y-4 lg:sticky lg:top-24">
               {listing.images.length > 0 ? (
                 <div className="space-y-3">
-                  <div className="h-80 w-full overflow-hidden rounded-lg border border-neutral-200 bg-neutral-100 shadow-sm">
+                  <div className="h-80 w-full overflow-hidden rounded-2xl border border-slate-200 bg-slate-100 shadow-lg">
                     <img
                       src={
                         listing.images[selectedImageIndex] ?? listing.images[0]
@@ -223,10 +248,10 @@ export default function ListingDetailPage() {
                             key={`${url}-${idx}`}
                             type="button"
                             onClick={() => setSelectedImageIndex(idx)}
-                            className={`h-20 w-20 flex-shrink-0 overflow-hidden rounded-md border p-0 transition ${
+                            className={`h-20 w-20 flex-shrink-0 overflow-hidden rounded-xl border-2 p-0 transition duration-200 ${
                               isActive
-                                ? "border-neutral-900 ring-2 ring-neutral-300"
-                                : "border-neutral-200 hover:border-neutral-400"
+                                ? "border-indigo-500 ring-2 ring-indigo-200"
+                                : "border-slate-200 hover:border-indigo-300"
                             }`}
                             aria-label={`Ver imagen ${idx + 1}`}
                             aria-current={isActive ? "true" : undefined}
@@ -245,48 +270,89 @@ export default function ListingDetailPage() {
                 </div>
               ) : (
                 <div
-                  className="flex h-80 w-full items-center justify-center rounded-lg border border-dashed border-neutral-300 bg-neutral-100 text-neutral-500"
+                  className="flex h-80 w-full items-center justify-center rounded-2xl border border-dashed border-slate-300 bg-slate-100 text-slate-500"
                   role="img"
                   aria-label="Sin imagen"
                 >
                   Sin imagen
                 </div>
               )}
+            </section>
 
-              <div className="rounded-lg bg-white p-6 shadow-md">
-                <h1 className="mb-4 text-2xl font-semibold text-neutral-900">
-                  {listing.title}
-                </h1>
-                <p className="mb-4 whitespace-pre-wrap text-neutral-700">
+            <div className="space-y-6">
+              <section className={`${CARD} p-6 sm:p-8`}>
+                <div className="mb-4 flex flex-wrap items-start justify-between gap-3">
+                  <h1 className="text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">
+                    {listing.title}
+                  </h1>
+                  <span
+                    className={`rounded-full px-3 py-1 text-xs font-bold ${statusBadgeClass(listing.status)}`}
+                  >
+                    {statusLabel(listing.status)}
+                  </span>
+                </div>
+                <p className="mb-6 text-3xl font-extrabold text-indigo-600">
+                  {formatCop(listing.price)}
+                </p>
+                <p className="mb-6 whitespace-pre-wrap leading-relaxed text-slate-600">
                   {listing.description}
                 </p>
-                <p className="mb-2 text-2xl font-semibold text-neutral-900">
-                  {listing.price.toLocaleString("es-CO", {
-                    style: "currency",
-                    currency: "COP",
-                    maximumFractionDigits: 0,
-                  })}
-                </p>
-                <ul className="space-y-1 text-sm text-neutral-600">
-                  <li>
-                    <span className="font-medium text-neutral-800">Categoría:</span>{" "}
-                    {listing.category}
-                  </li>
-                  <li>
-                    <span className="font-medium text-neutral-800">Condición:</span>{" "}
-                    {listing.condition}
-                  </li>
-                  <li>
-                    <span className="font-medium text-neutral-800">Estado:</span>{" "}
-                    {statusLabel(listing.status)}
-                  </li>
-                  <li>
-                    <span className="font-medium text-neutral-800">Ubicación:</span>{" "}
-                    {listing.location}
-                  </li>
-                </ul>
-              </div>
-            </section>
+                <dl className="grid gap-3 sm:grid-cols-2">
+                  <div className="rounded-xl bg-slate-50 px-4 py-3">
+                    <dt className="text-xs font-semibold uppercase text-slate-500">
+                      Categoría
+                    </dt>
+                    <dd className="mt-1 font-medium text-slate-800">
+                      {listing.category}
+                    </dd>
+                  </div>
+                  <div className="rounded-xl bg-slate-50 px-4 py-3">
+                    <dt className="text-xs font-semibold uppercase text-slate-500">
+                      Condición
+                    </dt>
+                    <dd className="mt-1 font-medium text-slate-800">
+                      {listing.condition}
+                    </dd>
+                  </div>
+                  <div className="rounded-xl bg-slate-50 px-4 py-3 sm:col-span-2">
+                    <dt className="text-xs font-semibold uppercase text-slate-500">
+                      Ubicación
+                    </dt>
+                    <dd className="mt-1 font-medium text-slate-800">
+                      {listing.location}
+                    </dd>
+                  </div>
+                </dl>
+              </section>
+
+              {!isOwner && seller ? (
+                <section className={`${CARD} flex items-center gap-4 p-5`}>
+                  <Avatar name={seller.fullName || "Usuario"} size="lg" />
+                  <div className="min-w-0 flex-1">
+                    <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                      Vendedor
+                    </p>
+                    <p className="truncate text-lg font-bold text-slate-900">
+                      {seller.fullName || "Usuario"}
+                    </p>
+                    <p className="text-sm text-slate-600">
+                      {seller.programName || "Programa no indicado"}
+                    </p>
+                    {seller.rating > 0 ? (
+                      <p className="mt-1 text-sm font-semibold text-amber-600">
+                        ★ {seller.rating.toFixed(1)}
+                      </p>
+                    ) : null}
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => navigate(`/users/${seller.id}`)}
+                    className="shrink-0 text-sm font-semibold text-indigo-600 transition hover:text-indigo-700"
+                  >
+                    Ver perfil
+                  </button>
+                </section>
+              ) : null}
 
             {favoriteMsg !== "" && (
               <p className="mt-4 text-sm text-green-600" role="status">
@@ -314,97 +380,98 @@ export default function ListingDetailPage() {
               </p>
             )}
 
-            <section
-              aria-label="Acciones"
-              className="mt-8 flex flex-col gap-3 sm:flex-row sm:flex-wrap"
-            >
-              {!isOwner && (
-                <>
-                  <button
-                    type="button"
-                    onClick={() => void handleAddFavorite()}
-                    className="rounded-md bg-neutral-900 px-4 py-2.5 text-sm font-medium text-white transition hover:bg-neutral-800"
-                  >
-                    Agregar a favoritos
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => void handleStartChat()}
-                    disabled={chatLoading}
-                    className="rounded-md border border-neutral-300 bg-white px-4 py-2.5 text-sm font-medium text-neutral-900 transition hover:bg-neutral-50 disabled:cursor-not-allowed disabled:opacity-50"
-                  >
-                    {chatLoading ? "Cargando..." : "Iniciar chat"}
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setReportError("");
-                      setReportMsg("");
-                      setReportModalOpen(true);
-                    }}
-                    disabled={reportLoading}
-                    className="rounded-md border border-red-300 bg-white px-4 py-2.5 text-sm font-medium text-red-700 transition hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-50"
-                  >
-                    Reportar
-                  </button>
-                </>
-              )}
-
-              {isOwner && (
-                <>
-                  <button
-                    type="button"
-                    onClick={() => navigate(`/chats?listingId=${id}`)}
-                    className="rounded-md border border-indigo-300 bg-indigo-50 px-4 py-2.5 text-sm font-medium text-indigo-800 transition hover:bg-indigo-100"
-                  >
-                    Ver mis chats sobre esta publicación
-                  </button>
-
-                  {getOwnerStateActions(listing.status).map((action) => (
-                    <button
-                      key={action.targetState}
-                      type="button"
-                      onClick={() => void handleUpdateState(action.targetState)}
-                      disabled={stateLoading}
-                      className={
-                        action.variant === "primary"
-                          ? "rounded-md bg-neutral-900 px-4 py-2.5 text-sm font-medium text-white transition hover:bg-neutral-800 disabled:cursor-not-allowed disabled:opacity-50"
-                          : "rounded-md border border-neutral-300 bg-white px-4 py-2.5 text-sm font-medium text-neutral-900 transition hover:bg-neutral-50 disabled:cursor-not-allowed disabled:opacity-50"
-                      }
-                    >
-                      {stateLoading ? "Actualizando..." : action.label}
-                    </button>
-                  ))}
-
-                  <button
-                    type="button"
-                    onClick={() => void handleDelete()}
-                    disabled={deleteLoading}
-                    className="rounded-md border border-red-300 bg-white px-4 py-2.5 text-sm font-medium text-red-700 transition hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-50"
-                  >
-                    {deleteLoading ? "Eliminando..." : "Eliminar publicación"}
-                  </button>
-                </>
-              )}
-
-              <button
-                type="button"
-                onClick={() => navigate("/listings")}
-                className="rounded-md border border-neutral-300 bg-white px-4 py-2.5 text-sm font-medium text-neutral-900 transition hover:bg-neutral-50"
+              <section
+                aria-label="Acciones"
+                className="flex flex-col gap-3 sm:flex-row sm:flex-wrap"
               >
-                ← Volver
-              </button>
-            </section>
+                {!isOwner && (
+                  <>
+                    <button
+                      type="button"
+                      onClick={() => void handleAddFavorite()}
+                      className={BTN_PRIMARY}
+                    >
+                      ♥ Agregar a favoritos
+                    </button>
 
-            <ReportListingModal
-              open={reportModalOpen}
-              loading={reportLoading}
-              onClose={() => setReportModalOpen(false)}
-              onSubmit={handleReportSubmit}
-            />
-          </>
+                    <button
+                      type="button"
+                      onClick={() => void handleStartChat()}
+                      disabled={chatLoading}
+                      className={`${BTN_SECONDARY} min-w-[10rem]`}
+                    >
+                      {chatLoading ? "Cargando..." : "💬 Iniciar chat"}
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setReportError("");
+                        setReportMsg("");
+                        setReportModalOpen(true);
+                      }}
+                      disabled={reportLoading}
+                      className="rounded-xl border border-red-200 bg-red-50 px-5 py-3 text-sm font-semibold text-red-700 transition duration-200 hover:bg-red-100 disabled:opacity-50"
+                    >
+                      Reportar
+                    </button>
+                  </>
+                )}
+
+                {isOwner && (
+                  <>
+                    <button
+                      type="button"
+                      onClick={() => navigate(`/chats?listingId=${id}`)}
+                      className={`${BTN_SECONDARY} border-indigo-200 bg-indigo-50 text-indigo-800 hover:bg-indigo-100`}
+                    >
+                      Ver mis chats
+                    </button>
+
+                    {getOwnerStateActions(listing.status).map((action) => (
+                      <button
+                        key={action.targetState}
+                        type="button"
+                        onClick={() => void handleUpdateState(action.targetState)}
+                        disabled={stateLoading}
+                        className={
+                          action.variant === "primary"
+                            ? BTN_PRIMARY
+                            : BTN_SECONDARY
+                        }
+                      >
+                        {stateLoading ? "Actualizando..." : action.label}
+                      </button>
+                    ))}
+
+                    <button
+                      type="button"
+                      onClick={() => void handleDelete()}
+                      disabled={deleteLoading}
+                      className="rounded-xl border border-red-200 bg-red-50 px-5 py-3 text-sm font-semibold text-red-700 transition hover:bg-red-100 disabled:opacity-50"
+                    >
+                      {deleteLoading ? "Eliminando..." : "Eliminar publicación"}
+                    </button>
+                  </>
+                )}
+
+                <button
+                  type="button"
+                  onClick={() => navigate("/listings")}
+                  className={BTN_SECONDARY}
+                >
+                  ← Volver
+                </button>
+              </section>
+
+              <ReportListingModal
+                open={reportModalOpen}
+                loading={reportLoading}
+                onClose={() => setReportModalOpen(false)}
+                onSubmit={handleReportSubmit}
+              />
+            </div>
+          </div>
         )}
       </div>
     </main>

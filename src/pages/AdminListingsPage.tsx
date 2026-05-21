@@ -1,14 +1,17 @@
 import { useCallback, useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { getAdminListings, hideListing, type AdminListing } from "../api/adminService.ts";
+import Spinner from "../components/Spinner.tsx";
 import { POLL_INTERVAL_MS } from "../utils/polling.ts";
 import { statusLabel } from "../utils/statusLabel.ts";
-
-const STATUS_COLORS: Record<string, string> = {
-  available: "bg-green-100 text-green-700",
-  reserved: "bg-yellow-100 text-yellow-700",
-  sold: "bg-red-100 text-red-700",
-};
+import {
+  CARD,
+  PAGE_BG,
+  TABLE_HEAD,
+  TABLE_ROW_EVEN,
+  TABLE_ROW_ODD,
+  statusBadgeClass,
+} from "../utils/ui.ts";
 
 export default function AdminListingsPage() {
   const navigate = useNavigate();
@@ -75,9 +78,9 @@ export default function AdminListingsPage() {
   }
 
   return (
-    <main className="min-h-screen bg-slate-50 px-4 py-8">
+    <main className={`${PAGE_BG} px-4 py-8`}>
       <div className="mx-auto max-w-6xl space-y-6">
-        <section className="rounded-2xl bg-gradient-to-r from-indigo-600 to-blue-500 p-6 text-white shadow-lg sm:p-8">
+        <section className="rounded-3xl bg-gradient-to-br from-indigo-700 via-indigo-600 to-blue-600 p-6 text-white shadow-xl sm:p-8">
           <h1 className="text-2xl font-bold tracking-tight">Publicaciones</h1>
           <p className="mt-1 text-sm text-white/80">
             Todas las publicaciones del marketplace, incluidas las ocultas
@@ -98,7 +101,7 @@ export default function AdminListingsPage() {
 
         {loading ? (
           <div className="flex justify-center py-16">
-            <div className="h-10 w-10 animate-spin rounded-full border-4 border-indigo-200 border-t-indigo-600" />
+            <Spinner />
           </div>
         ) : error !== "" ? (
           <p className="rounded-xl bg-red-50 p-6 text-red-600" role="alert">
@@ -109,10 +112,10 @@ export default function AdminListingsPage() {
             No hay publicaciones registradas.
           </p>
         ) : (
-          <div className="overflow-x-auto rounded-2xl bg-white shadow-sm">
+          <div className={`overflow-x-auto ${CARD}`}>
             <table className="w-full min-w-[720px] text-left text-sm">
               <thead>
-                <tr className="border-b border-neutral-200 text-neutral-600">
+                <tr className={`border-b border-slate-200 ${TABLE_HEAD}`}>
                   <th className="px-4 py-3 font-semibold">ID</th>
                   <th className="px-4 py-3 font-semibold">Título</th>
                   <th className="px-4 py-3 font-semibold">Precio</th>
@@ -122,10 +125,10 @@ export default function AdminListingsPage() {
                 </tr>
               </thead>
               <tbody>
-                {listings.map((listing) => (
+                {listings.map((listing, index) => (
                   <tr
                     key={listing.id}
-                    className="border-b border-neutral-100 last:border-0"
+                    className={`border-b border-slate-100 transition hover:bg-indigo-50/40 ${index % 2 === 0 ? TABLE_ROW_ODD : TABLE_ROW_EVEN}`}
                   >
                     <td className="px-4 py-3 font-mono text-xs text-neutral-500 max-w-[140px] truncate">
                       {listing.id}
@@ -149,9 +152,7 @@ export default function AdminListingsPage() {
                     </td>
                     <td className="px-4 py-3">
                       <span
-                        className={`inline-flex rounded-full px-2.5 py-0.5 text-xs font-semibold ${
-                          STATUS_COLORS[listing.status] ?? "bg-gray-100 text-gray-700"
-                        }`}
+                        className={`inline-flex rounded-full px-2.5 py-0.5 text-xs font-bold ${statusBadgeClass(listing.status)}`}
                       >
                         {statusLabel(listing.status)}
                       </span>

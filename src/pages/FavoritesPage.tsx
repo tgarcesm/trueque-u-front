@@ -2,7 +2,9 @@ import { useCallback, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import type { Favorite } from "../types/index.ts";
 import { getFavorites, removeFavorite } from "../api/favoritesService.ts";
+import Spinner from "../components/Spinner.tsx";
 import { POLL_INTERVAL_MS } from "../utils/polling.ts";
+import { BTN_PRIMARY, BTN_SECONDARY, CARD, PAGE_BG } from "../utils/ui.ts";
 
 export default function FavoritesPage() {
   const [favorites, setFavorites] = useState<Favorite[]>([]);
@@ -55,12 +57,14 @@ export default function FavoritesPage() {
   }
 
   return (
-    <main className="min-h-screen bg-neutral-50 px-4 py-8">
+    <main className={`${PAGE_BG} px-4 py-8`}>
       <div className="mx-auto w-full max-w-2xl space-y-6">
-        <h1 className="text-2xl font-semibold text-neutral-900">Favoritos</h1>
+        <h1 className="text-3xl font-bold text-slate-900">Favoritos</h1>
 
         {loading ? (
-          <p className="text-neutral-700">Cargando...</p>
+          <div className="flex justify-center py-12">
+            <Spinner />
+          </div>
         ) : error !== "" ? (
           <p className="text-red-600" role="alert">
             {error}
@@ -74,7 +78,7 @@ export default function FavoritesPage() {
                 {favorites.map((favorite) => (
                   <article
                     key={favorite.id}
-                    className="rounded-lg bg-white p-5 shadow-md"
+                    className={`${CARD} p-5 transition duration-200 hover:-translate-y-0.5 hover:shadow-xl`}
                   >
                     <p className="text-lg font-semibold text-neutral-900">
                       {favorite.title}
@@ -85,14 +89,14 @@ export default function FavoritesPage() {
                         onClick={() =>
                           navigate(`/listings/${favorite.listingId}`)
                         }
-                        className="rounded-md bg-neutral-900 px-4 py-2 text-sm font-medium text-white transition hover:bg-neutral-800"
+                        className={BTN_PRIMARY}
                       >
                         Ver publicación
                       </button>
                       <button
                         type="button"
                         onClick={() => void handleRemove(favorite)}
-                        className="rounded-md border border-red-300 bg-white px-4 py-2 text-sm font-medium text-red-700 transition hover:bg-red-50"
+                        className="rounded-xl border border-red-200 bg-red-50 px-4 py-2.5 text-sm font-semibold text-red-700 transition hover:bg-red-100"
                       >
                         Eliminar
                       </button>
@@ -107,7 +111,7 @@ export default function FavoritesPage() {
         <button
           type="button"
           onClick={() => navigate("/listings")}
-          className="w-full rounded-md border border-neutral-300 bg-white px-4 py-2.5 text-sm font-medium text-neutral-900 shadow-sm transition hover:bg-neutral-50 sm:w-auto"
+          className={`${BTN_SECONDARY} w-full sm:w-auto`}
         >
           ← Volver
         </button>

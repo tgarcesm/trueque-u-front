@@ -1,3 +1,37 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+@layer base {
+  html {
+    @apply scroll-smooth antialiased;
+  }
+
+  body {
+    @apply min-h-screen bg-[#f8fafc] font-sans text-slate-800;
+  }
+}
+
+@layer components {
+  .tu-page {
+    @apply min-h-screen bg-[#f8fafc] px-4 py-8;
+  }
+
+  .tu-container {
+    @apply mx-auto max-w-6xl;
+  }
+
+  .tu-chat-bg {
+    background-color: #e8edf5;
+    background-image: radial-gradient(
+        circle at 20% 20%,
+        rgba(99, 102, 241, 0.06) 0%,
+        transparent 45%
+      ),
+      radial-gradient(
+        circle at 80% 80%,
+        rgba(59, 130, 246, 0.06) 0%,
+        transparent 45%
+      );
+  }
+}

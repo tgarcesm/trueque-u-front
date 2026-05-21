@@ -17,17 +17,25 @@ import AdminCreateUserModal from "../components/AdminCreateUserModal.tsx";
 import CopyIdButton from "../components/CopyIdButton.tsx";
 import ReportListingAction from "../components/ReportListingAction.tsx";
 import ReportUserAction from "../components/ReportUserAction.tsx";
+import Spinner from "../components/Spinner.tsx";
 import { POLL_INTERVAL_MS } from "../utils/polling.ts";
+import {
+  CARD,
+  INPUT,
+  PAGE_BG,
+  TABLE_HEAD,
+  TABLE_ROW_EVEN,
+  TABLE_ROW_ODD,
+} from "../utils/ui.ts";
 
 type Tab = "reports" | "moderation" | "users";
 
-const INPUT_CLASS =
-  "w-full rounded-xl border border-neutral-200 px-4 py-2.5 text-neutral-900 shadow-sm outline-none transition focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100";
+const INPUT_CLASS = INPUT;
 
-const TAB_ACTIVE =
-  "rounded-xl bg-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow-sm";
-const TAB_INACTIVE =
-  "rounded-xl border border-neutral-200 bg-white px-4 py-2 text-sm font-medium text-neutral-700 transition hover:bg-neutral-50";
+const SIDEBAR_ACTIVE =
+  "w-full rounded-xl bg-gradient-to-r from-indigo-500 to-blue-500 px-4 py-3 text-left text-sm font-semibold text-white shadow-md shadow-indigo-500/25 transition duration-200";
+const SIDEBAR_INACTIVE =
+  "w-full rounded-xl px-4 py-3 text-left text-sm font-medium text-slate-600 transition duration-200 hover:bg-slate-100 hover:text-indigo-600";
 
 function formatReportType(type: AdminReport["targetType"]): string {
   return type === 1 ? "Usuario" : "Publicación";
@@ -318,49 +326,49 @@ export default function AdminDashboardPage() {
   }
 
   return (
-    <main className="min-h-screen bg-slate-50 px-4 py-8">
-      <div className="mx-auto max-w-6xl space-y-6">
-        <section className="rounded-2xl bg-gradient-to-r from-indigo-600 to-blue-500 p-6 text-white shadow-lg sm:p-8">
-          <h1 className="text-2xl font-bold tracking-tight">Panel de administración</h1>
-          <p className="mt-1 text-sm text-white/80">
-            Reportes, usuarios y moderación de la plataforma
-          </p>
-        </section>
-
-        <nav
-          aria-label="Secciones del panel"
-          className="flex flex-wrap gap-2"
+    <main className={`${PAGE_BG} px-4 py-8`}>
+      <div className="mx-auto flex max-w-7xl flex-col gap-6 lg:flex-row lg:items-start">
+        <aside
+          className={`${CARD} w-full shrink-0 p-4 lg:w-64 lg:sticky lg:top-24`}
+          aria-label="Menú del panel"
         >
-          <button
-            type="button"
-            onClick={() => setTab("reports")}
-            className={tab === "reports" ? TAB_ACTIVE : TAB_INACTIVE}
-          >
-            Reportes
-          </button>
-          <button
-            type="button"
-            onClick={() => setTab("users")}
-            className={tab === "users" ? TAB_ACTIVE : TAB_INACTIVE}
-          >
-            Usuarios
-          </button>
-          <button
-            type="button"
-            onClick={() => setTab("moderation")}
-            className={tab === "moderation" ? TAB_ACTIVE : TAB_INACTIVE}
-          >
-            Moderación
-          </button>
-        </nav>
+          <div className="mb-6 rounded-2xl bg-gradient-to-br from-indigo-700 to-blue-600 p-4 text-white">
+            <h1 className="text-lg font-bold">Panel admin</h1>
+            <p className="mt-1 text-xs text-indigo-100">TruequeU</p>
+          </div>
+          <nav className="flex flex-row gap-2 lg:flex-col">
+            <button
+              type="button"
+              onClick={() => setTab("reports")}
+              className={tab === "reports" ? SIDEBAR_ACTIVE : SIDEBAR_INACTIVE}
+            >
+              Reportes
+            </button>
+            <button
+              type="button"
+              onClick={() => setTab("users")}
+              className={tab === "users" ? SIDEBAR_ACTIVE : SIDEBAR_INACTIVE}
+            >
+              Usuarios
+            </button>
+            <button
+              type="button"
+              onClick={() => setTab("moderation")}
+              className={tab === "moderation" ? SIDEBAR_ACTIVE : SIDEBAR_INACTIVE}
+            >
+              Moderación
+            </button>
+          </nav>
+        </aside>
 
+        <div className="min-w-0 flex-1">
         {tab === "reports" ? (
-          <section className="rounded-2xl bg-white p-6 shadow-sm">
+          <section className={`${CARD} p-6`}>
             <h2 className="mb-4 text-lg font-semibold text-neutral-900">Reportes</h2>
 
             {reportsLoading ? (
               <div className="flex justify-center py-12">
-                <div className="h-10 w-10 animate-spin rounded-full border-4 border-indigo-200 border-t-indigo-600" />
+                <Spinner />
               </div>
             ) : reportsError !== "" ? (
               <p className="text-sm text-red-600" role="alert">
@@ -374,7 +382,7 @@ export default function AdminDashboardPage() {
               <div className="overflow-x-auto">
                 <table className="w-full min-w-[900px] text-left text-sm">
                   <thead>
-                    <tr className="border-b border-neutral-200 text-neutral-600">
+                    <tr className={`border-b border-slate-200 ${TABLE_HEAD}`}>
                       <th className="px-3 py-3 font-semibold">Tipo</th>
                       <th className="px-3 py-3 font-semibold">Ver</th>
                       <th className="px-3 py-3 font-semibold">ID reportado</th>
@@ -385,10 +393,10 @@ export default function AdminDashboardPage() {
                     </tr>
                   </thead>
                   <tbody>
-                    {reports.map((report) => (
+                    {reports.map((report, index) => (
                       <tr
                         key={report.reportId}
-                        className="border-b border-neutral-100 last:border-0"
+                        className={`border-b border-slate-100 transition hover:bg-indigo-50/40 ${index % 2 === 0 ? TABLE_ROW_ODD : TABLE_ROW_EVEN}`}
                       >
                         <td className="px-3 py-3">
                           <span
@@ -461,7 +469,7 @@ export default function AdminDashboardPage() {
             )}
           </section>
         ) : tab === "users" ? (
-          <section className="rounded-2xl bg-white p-6 shadow-sm">
+          <section className={`${CARD} p-6`}>
             <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
               <h2 className="text-lg font-semibold text-neutral-900">Usuarios</h2>
               <button
@@ -478,7 +486,7 @@ export default function AdminDashboardPage() {
 
             {usersLoading ? (
               <div className="flex justify-center py-12">
-                <div className="h-10 w-10 animate-spin rounded-full border-4 border-indigo-200 border-t-indigo-600" />
+                <Spinner />
               </div>
             ) : usersError !== "" ? (
               <p className="text-sm text-red-600" role="alert">
@@ -498,7 +506,7 @@ export default function AdminDashboardPage() {
                 <div className="overflow-x-auto">
                   <table className="w-full min-w-[900px] text-left text-sm">
                     <thead>
-                      <tr className="border-b border-neutral-200 text-neutral-600">
+                      <tr className={`border-b border-slate-200 ${TABLE_HEAD}`}>
                         <th className="px-3 py-3 font-semibold">Nombre</th>
                         <th className="px-3 py-3 font-semibold">Email</th>
                         <th className="px-3 py-3 font-semibold">Programa</th>
@@ -508,10 +516,10 @@ export default function AdminDashboardPage() {
                       </tr>
                     </thead>
                     <tbody>
-                      {users.map((user) => (
+                      {users.map((user, index) => (
                         <tr
                           key={user.id}
-                          className="border-b border-neutral-100 last:border-0"
+                          className={`border-b border-slate-100 transition hover:bg-indigo-50/40 ${index % 2 === 0 ? TABLE_ROW_ODD : TABLE_ROW_EVEN}`}
                         >
                           <td className="px-3 py-3 font-medium text-neutral-900">
                             {user.fullName || "—"}
@@ -594,8 +602,8 @@ export default function AdminDashboardPage() {
             />
           </section>
         ) : (
-          <section className="grid gap-6 md:grid-cols-2 xl:grid-cols-4">
-            <article className="rounded-2xl bg-white p-6 shadow-sm">
+          <section className="grid gap-6 md:grid-cols-2 xl:grid-cols-2">
+            <article className={`${CARD} p-6`}>
               <h2 className="mb-4 text-lg font-semibold text-neutral-900">
                 Ocultar publicación
               </h2>
@@ -656,7 +664,7 @@ export default function AdminDashboardPage() {
               </div>
             </article>
 
-            <article className="rounded-2xl bg-white p-6 shadow-sm">
+            <article className={`${CARD} p-6`}>
               <h2 className="mb-4 text-lg font-semibold text-neutral-900">
                 Suspender usuario
               </h2>
@@ -717,7 +725,7 @@ export default function AdminDashboardPage() {
               </div>
             </article>
 
-            <article className="rounded-2xl bg-white p-6 shadow-sm">
+            <article className={`${CARD} p-6`}>
               <h2 className="mb-4 text-lg font-semibold text-neutral-900">
                 Reactivar usuario
               </h2>
@@ -761,7 +769,7 @@ export default function AdminDashboardPage() {
               </div>
             </article>
 
-            <article className="rounded-2xl bg-white p-6 shadow-sm">
+            <article className={`${CARD} p-6`}>
               <h2 className="mb-4 text-lg font-semibold text-neutral-900">
                 Reactivar publicación
               </h2>
@@ -806,6 +814,7 @@ export default function AdminDashboardPage() {
             </article>
           </section>
         )}
+        </div>
       </div>
     </main>
   );

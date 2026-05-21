@@ -3,7 +3,9 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import { getMyChats } from "../api/chatsService.ts";
 import type { ChatThread } from "../types/index.ts";
 import { getCurrentUserId } from "../utils/auth.ts";
+import Spinner from "../components/Spinner.tsx";
 import { CHAT_POLL_INTERVAL_MS } from "../utils/polling.ts";
+import { CARD, PAGE_BG } from "../utils/ui.ts";
 
 function formatDate(iso: string | null): string {
   if (!iso) return "";
@@ -69,9 +71,9 @@ export default function ChatsListPage() {
   }
 
   return (
-    <main className="min-h-screen bg-slate-50 px-4 py-8">
+    <main className={`${PAGE_BG} px-4 py-8`}>
       <div className="mx-auto max-w-2xl space-y-6">
-        <section className="rounded-2xl bg-gradient-to-r from-indigo-600 to-blue-500 p-6 text-white shadow-lg">
+        <section className="rounded-3xl bg-gradient-to-br from-indigo-700 via-indigo-600 to-blue-600 p-6 text-white shadow-xl">
           <h1 className="text-2xl font-bold tracking-tight">Mis chats</h1>
           <p className="mt-1 text-sm text-white/80">
             {listingFilter
@@ -91,7 +93,7 @@ export default function ChatsListPage() {
 
         {loading ? (
           <div className="flex justify-center py-16">
-            <div className="h-10 w-10 animate-spin rounded-full border-4 border-indigo-200 border-t-indigo-600" />
+            <Spinner />
           </div>
         ) : error !== "" ? (
           <p className="rounded-xl bg-red-50 p-6 text-red-600" role="alert">
@@ -104,13 +106,13 @@ export default function ChatsListPage() {
               : "Aún no tienes conversaciones."}
           </p>
         ) : (
-          <ul className="divide-y divide-neutral-100 overflow-hidden rounded-2xl bg-white shadow-sm">
+          <ul className={`${CARD} divide-y divide-slate-100 overflow-hidden`}>
             {filteredChats.map((chat) => (
               <li key={chat.id}>
                 <button
                   type="button"
                   onClick={() => navigate(`/chat/${chat.id}`)}
-                  className="flex w-full flex-col gap-1 px-5 py-4 text-left transition hover:bg-indigo-50/60"
+                  className="flex w-full flex-col gap-1 px-5 py-4 text-left transition duration-200 hover:bg-indigo-50/70"
                 >
                   <div className="flex items-start justify-between gap-3">
                     <span className="font-semibold text-neutral-900 line-clamp-1">

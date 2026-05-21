@@ -2,6 +2,7 @@ import { type FormEvent, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { createListing } from "../api/listingsService.ts";
 import { ApiValidationError } from "../utils/apiErrors.ts";
+import { PAGE_BG } from "../utils/ui.ts";
 
 export default function PublishPage() {
   const [title, setTitle] = useState("");
@@ -105,7 +106,7 @@ const CONDITION_IDS: Record<string, number> = {
 }
 
   return (
-    <main className="flex min-h-screen justify-center bg-neutral-100 px-4 py-8">
+    <main className={`flex min-h-screen justify-center ${PAGE_BG} px-4 py-8`}>
       <div className="w-full max-w-lg space-y-4">
         <form
           className="rounded-lg bg-white p-6 shadow-lg sm:p-8"

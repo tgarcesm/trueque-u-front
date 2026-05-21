@@ -6,8 +6,10 @@ import {
   getListings,
   type ListingsQueryParams,
 } from "../api/listingsService.ts";
+import Spinner from "../components/Spinner.tsx";
 import { POLL_INTERVAL_MS } from "../utils/polling.ts";
 import { statusLabel } from "../utils/statusLabel.ts";
+import { formatCop, PAGE_BG, statusBadgeClass } from "../utils/ui.ts";
 
 const CATEGORY_OPTIONS = [
   "Todos",
@@ -24,12 +26,6 @@ const CATEGORY_EMOJI: Record<string, string> = {
   "Ropa": "👕",
   "Deportes": "⚽",
   "Hogar": "🏠",
-};
-
-const STATUS_COLORS: Record<string, string> = {
-  "available": "bg-green-100 text-green-700",
-  "reserved": "bg-yellow-100 text-yellow-700",
-  "sold": "bg-red-100 text-red-700",
 };
 
 const FILTER_SELECT_CLASS =
@@ -113,11 +109,10 @@ export default function ListingsPage() {
   }, [fetchListings]);
 
   return (
-    <main className="min-h-screen bg-slate-50 px-4 py-8">
+    <main className={`${PAGE_BG} px-4 py-8`}>
       <div className="mx-auto max-w-6xl">
 
-        {/* Hero banner */}
-        <section className="mb-8 rounded-2xl bg-gradient-to-r from-indigo-600 to-blue-500 p-6 text-white shadow-lg sm:p-8">
+        <section className="mb-8 overflow-hidden rounded-3xl bg-gradient-to-br from-indigo-700 via-indigo-600 to-blue-600 p-6 text-white shadow-xl shadow-indigo-500/20 sm:p-8">
           <h1 className="mb-1 text-3xl font-bold tracking-tight">
             Marketplace universitario 🎓
           </h1>
@@ -216,24 +211,25 @@ export default function ListingsPage() {
 
         {loading ? (
           <div className="flex items-center justify-center py-20">
-            <div className="h-10 w-10 animate-spin rounded-full border-4 border-indigo-200 border-t-indigo-600" />
+            <Spinner />
           </div>
         ) : error !== "" ? (
-          <p className="rounded-xl bg-red-50 p-6 text-red-600" role="alert">
+          <p className="rounded-2xl border border-red-100 bg-red-50 p-6 text-red-700" role="alert">
             {error}
           </p>
         ) : (
           <section aria-label="Listado de publicaciones">
             {listings.length === 0 ? (
-              <p className="rounded-xl bg-white p-8 text-center text-neutral-500 shadow-sm">
+              <p className="rounded-2xl border border-slate-100 bg-white p-10 text-center text-slate-500 shadow-lg">
                 No hay publicaciones disponibles
               </p>
             ) : (
               <>
-                <p className="mb-4 text-sm text-neutral-500">
-                  {listings.length} publicación{listings.length !== 1 ? "es" : ""} encontrada{listings.length !== 1 ? "s" : ""}
+                <p className="mb-5 text-sm font-medium text-slate-500">
+                  {listings.length} publicación{listings.length !== 1 ? "es" : ""}{" "}
+                  encontrada{listings.length !== 1 ? "s" : ""}
                 </p>
-                <div className="grid grid-cols-1 gap-5 md:grid-cols-2 lg:grid-cols-3">
+                <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
                   {listings.map((listing) => (
                     <article
                       key={listing.id}
@@ -246,43 +242,45 @@ export default function ListingsPage() {
                           navigate(`/listings/${listing.id}`);
                         }
                       }}
-                      className="group cursor-pointer overflow-hidden rounded-2xl bg-white shadow-sm outline-none ring-offset-2 transition-all duration-200 hover:-translate-y-1 hover:shadow-lg focus-visible:ring-2 focus-visible:ring-indigo-400"
+                      className="group cursor-pointer overflow-hidden rounded-2xl border border-slate-100 bg-white shadow-lg shadow-slate-200/60 outline-none transition-all duration-300 hover:-translate-y-1.5 hover:shadow-xl hover:shadow-indigo-200/40 focus-visible:ring-2 focus-visible:ring-indigo-400"
                     >
-                      <div className="relative overflow-hidden">
+                      <div className="relative h-52 overflow-hidden bg-slate-100">
                         {listing.images.length > 0 ? (
-                          <img
-                            src={listing.images[0]}
-                            alt={listing.title}
-                            className="aspect-[4/3] w-full object-cover transition-transform duration-300 group-hover:scale-105"
-                          />
+                          <>
+                            <img
+                              src={listing.images[0]}
+                              alt={listing.title}
+                              className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-110"
+                            />
+                            <div className="absolute inset-0 bg-gradient-to-t from-slate-900/75 via-slate-900/10 to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
+                            <p className="absolute bottom-3 left-3 right-3 translate-y-2 text-sm font-semibold text-white opacity-0 transition-all duration-300 group-hover:translate-y-0 group-hover:opacity-100 line-clamp-2">
+                              Ver detalle →
+                            </p>
+                          </>
                         ) : (
-                          <div className="flex aspect-[4/3] w-full items-center justify-center bg-indigo-50 text-4xl">
+                          <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-indigo-50 to-blue-50 text-5xl">
                             {CATEGORY_EMOJI[listing.category] ?? "📦"}
                           </div>
                         )}
-                        <span className={`absolute right-3 top-3 rounded-full px-2.5 py-0.5 text-xs font-semibold ${STATUS_COLORS[listing.status] ?? "bg-gray-100 text-gray-700"}`}>
+                        <span
+                          className={`absolute right-3 top-3 rounded-full px-3 py-1 text-xs font-bold shadow-sm ${statusBadgeClass(listing.status)}`}
+                        >
                           {statusLabel(listing.status)}
                         </span>
                       </div>
 
-                      <div className="p-4">
-                        <div className="mb-2 flex items-start justify-between gap-2">
-                          <h2 className="line-clamp-2 text-base font-semibold text-neutral-900 leading-snug">
-                            {listing.title}
-                          </h2>
-                        </div>
-                        <p className="mb-3 text-xl font-bold text-indigo-600">
-                          {listing.price.toLocaleString("es-CO", {
-                            style: "currency",
-                            currency: "COP",
-                            maximumFractionDigits: 0,
-                          })}
+                      <div className="p-5">
+                        <h2 className="mb-2 line-clamp-2 text-base font-bold leading-snug text-slate-900">
+                          {listing.title}
+                        </h2>
+                        <p className="mb-4 text-2xl font-extrabold tracking-tight text-indigo-600">
+                          {formatCop(listing.price)}
                         </p>
-                        <div className="flex items-center gap-2 flex-wrap">
-                          <span className="rounded-full bg-indigo-50 px-2.5 py-0.5 text-xs font-medium text-indigo-700">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <span className="rounded-full bg-indigo-50 px-3 py-1 text-xs font-semibold text-indigo-700">
                             {CATEGORY_EMOJI[listing.category]} {listing.category}
                           </span>
-                          <span className="rounded-full bg-slate-100 px-2.5 py-0.5 text-xs font-medium text-slate-600">
+                          <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-medium text-slate-600">
                             {listing.condition}
                           </span>
                         </div>
