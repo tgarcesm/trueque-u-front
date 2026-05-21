@@ -21,9 +21,12 @@ export default function Navbar() {
   return (
     <header className="bg-gradient-to-r from-indigo-600 to-blue-500 shadow-lg px-4 py-3 md:px-8">
       <div className="mx-auto flex max-w-6xl items-center justify-between">
-        <span className="text-xl font-bold text-white tracking-tight">
+        <NavLink
+          to="/listings"
+          className="text-xl font-bold text-white tracking-tight transition hover:text-white/90"
+        >
           🔄 TruequeU
-        </span>
+        </NavLink>
         <nav aria-label="Principal">
           <ul className="flex flex-row items-center gap-2">
             <li>
@@ -39,6 +42,11 @@ export default function Navbar() {
             <li>
               <NavLink to="/favorites" className={navLinkClass}>
                 Favoritos
+              </NavLink>
+            </li>
+            <li>
+              <NavLink to="/profile" className={navLinkClass}>
+                Mi perfil
               </NavLink>
             </li>
             {isAdmin() ? (

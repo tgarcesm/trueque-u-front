@@ -1,4 +1,4 @@
-import { type FormEvent, useEffect, useState } from "react";
+import { type FormEvent, useCallback, useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import type { ChatMessage } from "../types/index.ts";
 import { getChatMessages, sendMessage } from "../api/chatsService.ts";
@@ -16,33 +16,55 @@ export default function ChatPage() {
 
   const currentUserId = getCurrentUserId();
 
-  useEffect(() => {
-    async function fetchMessages(chatId: string) {
-      setLoading(true);
-      setError("");
+  const fetchMessages = useCallback(
+    async (silent = false) => {
+      const chatId = id?.trim();
+      if (!chatId) {
+        setMessages([]);
+        if (!silent) {
+          setError("");
+          setLoading(false);
+        }
+        return;
+      }
+
+      if (!silent) {
+        setLoading(true);
+        setError("");
+      }
       try {
         const data = await getChatMessages(chatId);
         setMessages(data);
+        if (silent) setError("");
       } catch (err) {
-        setMessages([]);
-        setError(
-          err instanceof Error ? err.message : "No se pudieron cargar los mensajes",
-        );
+        if (!silent) {
+          setMessages([]);
+          setError(
+            err instanceof Error
+              ? err.message
+              : "No se pudieron cargar los mensajes",
+          );
+        }
       } finally {
-        setLoading(false);
+        if (!silent) setLoading(false);
       }
-    }
+    },
+    [id],
+  );
 
+  useEffect(() => {
+    void fetchMessages(false);
+  }, [fetchMessages]);
+
+  useEffect(() => {
     const chatId = id?.trim();
-    if (!chatId) {
-      setMessages([]);
-      setError("");
-      setLoading(false);
-      return;
-    }
+    if (!chatId) return;
 
-    void fetchMessages(chatId);
-  }, [id]);
+    const intervalId = window.setInterval(() => {
+      void fetchMessages(true);
+    }, 10_000);
+    return () => window.clearInterval(intervalId);
+  }, [id, fetchMessages]);
 
   async function handleSend(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();

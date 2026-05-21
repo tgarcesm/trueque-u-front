@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import type { Listing } from "../types/index.ts";
 import {
@@ -55,10 +55,12 @@ export default function ListingsPage() {
     return () => window.clearTimeout(timer);
   }, [search]);
 
-  useEffect(() => {
-    async function fetchListings() {
-      setLoading(true);
-      setError("");
+  const fetchListings = useCallback(
+    async (silent = false) => {
+      if (!silent) {
+        setLoading(true);
+        setError("");
+      }
       try {
         const min = minPrice.trim() !== "" ? Number(minPrice) : undefined;
         const max = maxPrice.trim() !== "" ? Number(maxPrice) : undefined;
@@ -75,23 +77,39 @@ export default function ListingsPage() {
         };
         const data = await getListings(filters);
         setListings(data);
+        if (silent) setError("");
       } catch (err) {
-        setError(
-          err instanceof Error ? err.message : "No se pudieron cargar los anuncios",
-        );
+        if (!silent) {
+          setError(
+            err instanceof Error
+              ? err.message
+              : "No se pudieron cargar los anuncios",
+          );
+        }
       } finally {
-        setLoading(false);
+        if (!silent) setLoading(false);
       }
-    }
-    void fetchListings();
-  }, [
-    debouncedSearch,
-    categoryFilter,
-    minPrice,
-    maxPrice,
-    conditionFilter,
-    stateFilter,
-  ]);
+    },
+    [
+      debouncedSearch,
+      categoryFilter,
+      minPrice,
+      maxPrice,
+      conditionFilter,
+      stateFilter,
+    ],
+  );
+
+  useEffect(() => {
+    void fetchListings(false);
+  }, [fetchListings]);
+
+  useEffect(() => {
+    const intervalId = window.setInterval(() => {
+      void fetchListings(true);
+    }, 10_000);
+    return () => window.clearInterval(intervalId);
+  }, [fetchListings]);
 
   return (
     <main className="min-h-screen bg-slate-50 px-4 py-8">

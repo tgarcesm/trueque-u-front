@@ -9,6 +9,7 @@ import FavoritesPage from './pages/FavoritesPage.tsx'
 import ListingDetailPage from './pages/ListingDetailPage.tsx'
 import ListingsPage from './pages/ListingsPage.tsx'
 import LoginPage from './pages/LoginPage.tsx'
+import ProfilePage from './pages/ProfilePage.tsx'
 import PublishPage from './pages/PublishPage.tsx'
 import RegisterPage from './pages/RegisterPage.tsx'
 import { isAuthenticated } from './utils/auth.ts'
@@ -41,6 +42,7 @@ function App() {
             <Route path="/listings/:id" element={<ListingDetailPage />} />
             <Route path="/publish" element={<PublishPage />} />
             <Route path="/favorites" element={<FavoritesPage />} />
+            <Route path="/profile" element={<ProfilePage />} />
             <Route path="/chat/:id" element={<ChatPage />} />
           </Route>
           <Route element={<AdminRoute />}>
