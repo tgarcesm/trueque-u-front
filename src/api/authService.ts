@@ -1,4 +1,5 @@
 import type { User } from "../types/index.ts";
+import { setToken } from "../utils/auth.ts";
 import { API_URL } from "./config.ts";
 
 export async function login(email: string, password: string): Promise<User> {
@@ -10,7 +11,7 @@ export async function login(email: string, password: string): Promise<User> {
     });
     if (!res.ok) throw new Error("Credenciales inválidas");
     const data = await res.json();
-    localStorage.setItem("token", data.token);
+    setToken(data.token);
     return data as User;
   } catch (error) {
     if (error instanceof Error) throw error;

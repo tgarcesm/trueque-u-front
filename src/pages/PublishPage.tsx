@@ -16,10 +16,19 @@ export default function PublishPage() {
   const [imageUrls, setImageUrls] = useState<string[]>([]);
 
   const priceNumber = Number(price);
+  const priceError = (() => {
+    const trimmed = price.trim();
+    if (trimmed === "") return "";
+    if (Number.isNaN(priceNumber)) return "Ingresa un precio válido.";
+    if (priceNumber < 0) return "El precio no puede ser negativo.";
+    if (priceNumber === 0) return "El precio debe ser mayor a 0.";
+    return "";
+  })();
   const isPublishDisabled =
     loading ||
     title.trim() === "" ||
     price.trim() === "" ||
+    priceError !== "" ||
     !(priceNumber > 0);
 
     const CATEGORY_IDS: Record<string, string> = {
@@ -64,6 +73,7 @@ const CONDITION_IDS: Record<string, number> = {
   async function handleSubmit(e: FormEvent<HTMLFormElement>) {
   e.preventDefault();
   setError("");
+  if (priceError !== "") return;
   setLoading(true);
   try {
        await createListing({
@@ -189,14 +199,29 @@ const CONDITION_IDS: Record<string, number> = {
                 id="publish-price"
                 type="number"
                 name="price"
-                min={1}
+                min={0}
                 step={1}
                 inputMode="numeric"
                 value={price}
                 onChange={(e) => setPrice(e.target.value)}
-                className="w-full rounded-md border border-neutral-300 px-3 py-2 text-neutral-900 shadow-sm outline-none focus:border-neutral-400 focus:ring-2 focus:ring-neutral-300"
+                aria-invalid={priceError !== ""}
+                aria-describedby={priceError !== "" ? "publish-price-error" : undefined}
+                className={`w-full rounded-md border px-3 py-2 text-neutral-900 shadow-sm outline-none focus:ring-2 ${
+                  priceError !== ""
+                    ? "border-red-500 focus:border-red-500 focus:ring-red-200"
+                    : "border-neutral-300 focus:border-neutral-400 focus:ring-neutral-300"
+                }`}
                 disabled={loading}
               />
+              {priceError !== "" ? (
+                <p
+                  id="publish-price-error"
+                  className="mt-1.5 text-sm text-red-600"
+                  role="alert"
+                >
+                  {priceError}
+                </p>
+              ) : null}
             </div>
 
             <div>

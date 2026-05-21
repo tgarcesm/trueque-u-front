@@ -9,22 +9,10 @@ import {
 import { addFavorite } from "../api/favoritesService.ts";
 import { startChat } from "../api/chatsService.ts";
 import { statusLabel } from "../utils/statusLabel.ts";
+import { getOwnerStateActions } from "../utils/listingStateActions.ts";
+import ReportListingModal from "../components/ReportListingModal.tsx";
 import { reportListing } from "../api/reportsService.ts";
-
-function getCurrentUserId(): string {
-  const token = localStorage.getItem("token");
-  if (!token) return "";
-  try {
-    const payload = JSON.parse(atob(token.split(".")[1]));
-    return (
-      payload[
-        "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier"
-      ] ?? ""
-    );
-  } catch {
-    return "";
-  }
-}
+import { getCurrentUserId } from "../utils/auth.ts";
 
 export default function ListingDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -37,6 +25,7 @@ export default function ListingDetailPage() {
   const [favoriteError, setFavoriteError] = useState("");
   const [chatLoading, setChatLoading] = useState(false);
   const [deleteLoading, setDeleteLoading] = useState(false);
+  const [reportModalOpen, setReportModalOpen] = useState(false);
   const [reportMsg, setReportMsg] = useState("");
   const [reportError, setReportError] = useState("");
   const [reportLoading, setReportLoading] = useState(false);
@@ -120,18 +109,15 @@ export default function ListingDetailPage() {
     }
   }
 
-  async function handleReport() {
+  async function handleReportSubmit(reason: string, comment: string) {
     if (!id) return;
-    const reason = window.prompt("Motivo del reporte (mínimo 3 caracteres):");
-    if (!reason || reason.trim().length < 3) return;
-    const comment = window.prompt("Comentario adicional (mínimo 3 caracteres):");
-    if (!comment || comment.trim().length < 3) return;
 
     setReportLoading(true);
     setReportMsg("");
     setReportError("");
     try {
-      await reportListing(id, reason.trim(), comment.trim());
+      await reportListing(id, reason, comment);
+      setReportModalOpen(false);
       setReportMsg("Reporte enviado correctamente.");
     } catch (err) {
       setReportError(
@@ -142,20 +128,27 @@ export default function ListingDetailPage() {
     }
   }
 
- async function handleUpdateState(newState: number) {
-  if (!id) return;
-  setError("");
-  setStateLoading(true);
-  try {
-    await updateListingState(id, newState);
-    const refreshed = await getListingById(id); // <-- este sí mapea state -> status
-    setListing(refreshed);
-  } catch (err) {
-    setError(err instanceof Error ? err.message : "No se pudo cambiar el estado");
-  } finally {
-    setStateLoading(false);
+  async function handleUpdateState(newState: 0 | 1 | 2) {
+    if (!id || listing === null) return;
+    const allowed = getOwnerStateActions(listing.status).some(
+      (action) => action.targetState === newState,
+    );
+    if (!allowed) return;
+
+    setError("");
+    setStateLoading(true);
+    try {
+      await updateListingState(id, newState);
+      const refreshed = await getListingById(id);
+      setListing(refreshed);
+    } catch (err) {
+      setError(
+        err instanceof Error ? err.message : "No se pudo cambiar el estado",
+      );
+    } finally {
+      setStateLoading(false);
+    }
   }
-}
 
   return (
     <main className="min-h-screen bg-neutral-50 px-4 py-8">
@@ -301,38 +294,36 @@ export default function ListingDetailPage() {
 
                   <button
                     type="button"
-                    onClick={() => void handleReport()}
+                    onClick={() => {
+                      setReportError("");
+                      setReportMsg("");
+                      setReportModalOpen(true);
+                    }}
                     disabled={reportLoading}
                     className="rounded-md border border-red-300 bg-white px-4 py-2.5 text-sm font-medium text-red-700 transition hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-50"
                   >
-                    {reportLoading ? "Enviando..." : "Reportar"}
+                    Reportar
                   </button>
                 </>
               )}
 
               {isOwner && (
                 <>
-                  {listing.status === "available" ? (
+                  {getOwnerStateActions(listing.status).map((action) => (
                     <button
+                      key={action.targetState}
                       type="button"
-                      onClick={() => void handleUpdateState(1)}
+                      onClick={() => void handleUpdateState(action.targetState)}
                       disabled={stateLoading}
-                      className="rounded-md border border-neutral-300 bg-white px-4 py-2.5 text-sm font-medium text-neutral-900 transition hover:bg-neutral-50 disabled:cursor-not-allowed disabled:opacity-50"
+                      className={
+                        action.variant === "primary"
+                          ? "rounded-md bg-neutral-900 px-4 py-2.5 text-sm font-medium text-white transition hover:bg-neutral-800 disabled:cursor-not-allowed disabled:opacity-50"
+                          : "rounded-md border border-neutral-300 bg-white px-4 py-2.5 text-sm font-medium text-neutral-900 transition hover:bg-neutral-50 disabled:cursor-not-allowed disabled:opacity-50"
+                      }
                     >
-                      {stateLoading ? "Actualizando..." : "Marcar como reservado"}
+                      {stateLoading ? "Actualizando..." : action.label}
                     </button>
-                  ) : null}
-
-                  {listing.status === "reserved" ? (
-                    <button
-                      type="button"
-                      onClick={() => void handleUpdateState(2)}
-                      disabled={stateLoading}
-                      className="rounded-md bg-neutral-900 px-4 py-2.5 text-sm font-medium text-white transition hover:bg-neutral-800 disabled:cursor-not-allowed disabled:opacity-50"
-                    >
-                      {stateLoading ? "Actualizando..." : "Marcar como vendido"}
-                    </button>
-                  ) : null}
+                  ))}
 
                   <button
                     type="button"
@@ -353,6 +344,13 @@ export default function ListingDetailPage() {
                 ← Volver
               </button>
             </section>
+
+            <ReportListingModal
+              open={reportModalOpen}
+              loading={reportLoading}
+              onClose={() => setReportModalOpen(false)}
+              onSubmit={handleReportSubmit}
+            />
           </>
         )}
       </div>

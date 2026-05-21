@@ -1,4 +1,5 @@
 import { NavLink, useNavigate } from 'react-router-dom'
+import { clearToken, isAdmin } from '../utils/auth.ts'
 
 function navLinkClass({ isActive }: { isActive: boolean }): string {
   return [
@@ -13,7 +14,7 @@ export default function Navbar() {
   const navigate = useNavigate();
 
   function handleLogout() {
-    localStorage.removeItem("token");
+    clearToken();
     navigate("/login");
   }
 
@@ -40,6 +41,13 @@ export default function Navbar() {
                 Favoritos
               </NavLink>
             </li>
+            {isAdmin() ? (
+              <li>
+                <NavLink to="/admin" className={navLinkClass}>
+                  Admin
+                </NavLink>
+              </li>
+            ) : null}
             <li>
               <button
                 type="button"

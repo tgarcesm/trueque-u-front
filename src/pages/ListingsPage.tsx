@@ -1,7 +1,11 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import type { Listing } from "../types/index.ts";
-import { getListings } from "../api/listingsService.ts";
+import {
+  CATEGORY_IDS,
+  getListings,
+  type ListingsQueryParams,
+} from "../api/listingsService.ts";
 import { statusLabel } from "../utils/statusLabel.ts";
 
 const CATEGORY_OPTIONS = [
@@ -27,20 +31,49 @@ const STATUS_COLORS: Record<string, string> = {
   "sold": "bg-red-100 text-red-700",
 };
 
+const FILTER_SELECT_CLASS =
+  "rounded-xl border-0 bg-white/20 px-4 py-2.5 text-white outline-none backdrop-blur-sm focus:bg-white/30 focus:ring-2 focus:ring-white/50";
+
+const FILTER_INPUT_CLASS =
+  "w-full rounded-xl border-0 bg-white/20 px-4 py-2.5 text-white placeholder-white/60 outline-none backdrop-blur-sm focus:bg-white/30 focus:ring-2 focus:ring-white/50 sm:w-36";
+
 export default function ListingsPage() {
   const [listings, setListings] = useState<Listing[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [search, setSearch] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("Todos");
+  const [minPrice, setMinPrice] = useState("");
+  const [maxPrice, setMaxPrice] = useState("");
+  const [conditionFilter, setConditionFilter] = useState("");
+  const [stateFilter, setStateFilter] = useState("");
   const navigate = useNavigate();
+
+  useEffect(() => {
+    const timer = window.setTimeout(() => setDebouncedSearch(search), 400);
+    return () => window.clearTimeout(timer);
+  }, [search]);
 
   useEffect(() => {
     async function fetchListings() {
       setLoading(true);
       setError("");
       try {
-        const data = await getListings();
+        const min = minPrice.trim() !== "" ? Number(minPrice) : undefined;
+        const max = maxPrice.trim() !== "" ? Number(maxPrice) : undefined;
+        const filters: ListingsQueryParams = {
+          keyword: debouncedSearch.trim() || undefined,
+          categoryId:
+            categoryFilter !== "Todos" ? CATEGORY_IDS[categoryFilter] : undefined,
+          minPrice: min != null && !Number.isNaN(min) ? min : undefined,
+          maxPrice: max != null && !Number.isNaN(max) ? max : undefined,
+          condition:
+            conditionFilter !== "" ? Number(conditionFilter) : undefined,
+          state: stateFilter !== "" ? Number(stateFilter) : undefined,
+          pageSize: 50,
+        };
+        const data = await getListings(filters);
         setListings(data);
       } catch (err) {
         setError(
@@ -51,16 +84,14 @@ export default function ListingsPage() {
       }
     }
     void fetchListings();
-  }, []);
-
-  const filteredListings = listings.filter((listing) => {
-    const haystack = listing.title.toLowerCase();
-    const needle = search.trim().toLowerCase();
-    const matchesSearch = needle === "" || haystack.includes(needle);
-    const matchesCategory =
-      categoryFilter === "Todos" || listing.category === categoryFilter;
-    return matchesSearch && matchesCategory;
-  });
+  }, [
+    debouncedSearch,
+    categoryFilter,
+    minPrice,
+    maxPrice,
+    conditionFilter,
+    stateFilter,
+  ]);
 
   return (
     <main className="min-h-screen bg-slate-50 px-4 py-8">
@@ -74,27 +105,93 @@ export default function ListingsPage() {
           <p className="mb-6 text-white/80 text-sm">
             Compra, vende e intercambia con otros estudiantes
           </p>
-          <div className="flex flex-col gap-3 sm:flex-row">
-            <input
-              id="listings-search"
-              type="search"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              placeholder="🔍 Buscar por título..."
-              className="flex-1 rounded-xl border-0 bg-white/20 px-4 py-2.5 text-white placeholder-white/60 outline-none backdrop-blur-sm focus:bg-white/30 focus:ring-2 focus:ring-white/50"
-            />
-            <select
-              id="listings-category"
-              value={categoryFilter}
-              onChange={(e) => setCategoryFilter(e.target.value)}
-              className="rounded-xl border-0 bg-white/20 px-4 py-2.5 text-white outline-none backdrop-blur-sm focus:bg-white/30 focus:ring-2 focus:ring-white/50 sm:w-48"
-            >
-              {CATEGORY_OPTIONS.map((opt) => (
-                <option key={opt} value={opt} className="text-neutral-900">
-                  {opt}
+          <div className="flex flex-col gap-3">
+            <div className="flex flex-col gap-3 sm:flex-row">
+              <input
+                id="listings-search"
+                type="search"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder="🔍 Buscar por título..."
+                className="flex-1 rounded-xl border-0 bg-white/20 px-4 py-2.5 text-white placeholder-white/60 outline-none backdrop-blur-sm focus:bg-white/30 focus:ring-2 focus:ring-white/50"
+              />
+              <select
+                id="listings-category"
+                value={categoryFilter}
+                onChange={(e) => setCategoryFilter(e.target.value)}
+                className={`${FILTER_SELECT_CLASS} sm:w-48`}
+              >
+                {CATEGORY_OPTIONS.map((opt) => (
+                  <option key={opt} value={opt} className="text-neutral-900">
+                    {opt}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap">
+              <input
+                id="listings-min-price"
+                type="number"
+                min={0}
+                value={minPrice}
+                onChange={(e) => setMinPrice(e.target.value)}
+                placeholder="Precio mín."
+                className={FILTER_INPUT_CLASS}
+              />
+              <input
+                id="listings-max-price"
+                type="number"
+                min={0}
+                value={maxPrice}
+                onChange={(e) => setMaxPrice(e.target.value)}
+                placeholder="Precio máx."
+                className={FILTER_INPUT_CLASS}
+              />
+              <select
+                id="listings-condition"
+                value={conditionFilter}
+                onChange={(e) => setConditionFilter(e.target.value)}
+                className={`${FILTER_SELECT_CLASS} sm:w-44`}
+              >
+                <option value="" className="text-neutral-900">
+                  Condición: todas
                 </option>
-              ))}
-            </select>
+                <option value="0" className="text-neutral-900">
+                  Nuevo
+                </option>
+                <option value="1" className="text-neutral-900">
+                  Como nuevo
+                </option>
+                <option value="2" className="text-neutral-900">
+                  Bueno
+                </option>
+                <option value="3" className="text-neutral-900">
+                  Regular
+                </option>
+                <option value="4" className="text-neutral-900">
+                  Malo
+                </option>
+              </select>
+              <select
+                id="listings-state"
+                value={stateFilter}
+                onChange={(e) => setStateFilter(e.target.value)}
+                className={`${FILTER_SELECT_CLASS} sm:w-44`}
+              >
+                <option value="" className="text-neutral-900">
+                  Estado: todos
+                </option>
+                <option value="0" className="text-neutral-900">
+                  Disponible
+                </option>
+                <option value="1" className="text-neutral-900">
+                  Reservado
+                </option>
+                <option value="2" className="text-neutral-900">
+                  Vendido
+                </option>
+              </select>
+            </div>
           </div>
         </section>
 
@@ -108,17 +205,17 @@ export default function ListingsPage() {
           </p>
         ) : (
           <section aria-label="Listado de publicaciones">
-            {filteredListings.length === 0 ? (
+            {listings.length === 0 ? (
               <p className="rounded-xl bg-white p-8 text-center text-neutral-500 shadow-sm">
                 No hay publicaciones disponibles
               </p>
             ) : (
               <>
                 <p className="mb-4 text-sm text-neutral-500">
-                  {filteredListings.length} publicación{filteredListings.length !== 1 ? "es" : ""} encontrada{filteredListings.length !== 1 ? "s" : ""}
+                  {listings.length} publicación{listings.length !== 1 ? "es" : ""} encontrada{listings.length !== 1 ? "s" : ""}
                 </p>
                 <div className="grid grid-cols-1 gap-5 md:grid-cols-2 lg:grid-cols-3">
-                  {filteredListings.map((listing) => (
+                  {listings.map((listing) => (
                     <article
                       key={listing.id}
                       tabIndex={0}

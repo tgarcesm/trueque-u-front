@@ -2,17 +2,7 @@ import { type FormEvent, useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import type { ChatMessage } from "../types/index.ts";
 import { getChatMessages, sendMessage } from "../api/chatsService.ts";
-
-function getCurrentUserId(): string {
-  const token = localStorage.getItem("token");
-  if (!token) return "";
-  try {
-    const payload = JSON.parse(atob(token.split(".")[1]));
-    return payload["http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier"] ?? "";
-  } catch {
-    return "";
-  }
-}
+import { getCurrentUserId } from "../utils/auth.ts";
 
 export default function ChatPage() {
   const { id } = useParams<{ id: string }>();

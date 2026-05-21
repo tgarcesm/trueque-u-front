@@ -1,12 +1,41 @@
 import type { Listing } from "../types/index.ts";
 import { API_URL, authFetch } from "./config.ts";
 
+export const CATEGORY_IDS: Record<string, string> = {
+  Electrónica: "bbbbbbbb-bbbb-bbbb-bbbb-000000000001",
+  Hogar: "bbbbbbbb-bbbb-bbbb-bbbb-000000000002",
+  Ropa: "bbbbbbbb-bbbb-bbbb-bbbb-000000000003",
+  Deportes: "bbbbbbbb-bbbb-bbbb-bbbb-000000000004",
+  Libros: "bbbbbbbb-bbbb-bbbb-bbbb-000000000005",
+};
+
 const CATEGORY_NAMES: Record<string, string> = {
   "bbbbbbbb-bbbb-bbbb-bbbb-000000000001": "Electrónica",
   "bbbbbbbb-bbbb-bbbb-bbbb-000000000002": "Hogar",
   "bbbbbbbb-bbbb-bbbb-bbbb-000000000003": "Ropa",
   "bbbbbbbb-bbbb-bbbb-bbbb-000000000004": "Deportes",
   "bbbbbbbb-bbbb-bbbb-bbbb-000000000005": "Libros",
+};
+
+export const CONDITION_LABELS: Record<number, string> = {
+  0: "Nuevo",
+  1: "Como nuevo",
+  2: "Bueno",
+  3: "Regular",
+  4: "Malo",
+};
+
+export type ListingsQueryParams = {
+  keyword?: string;
+  categoryId?: string;
+  minPrice?: number;
+  maxPrice?: number;
+  condition?: number;
+  state?: number;
+  postedAfter?: string;
+  postedBefore?: string;
+  page?: number;
+  pageSize?: number;
 };
 
 function mapListingState(state: unknown): Listing["status"] {
@@ -16,9 +45,27 @@ function mapListingState(state: unknown): Listing["status"] {
 }
 
 function mapCondition(condition: unknown): Listing["condition"] {
-  // Si quieres diferenciar mejor, ajusta esto según tu UI.
-  // Por ahora respetamos el comportamiento que tenías:
-  return condition === 0 ? "Nuevo" : "Usado";
+  const n = Number(condition);
+  return CONDITION_LABELS[n] ?? "—";
+}
+
+function buildListingsQuery(params?: ListingsQueryParams): string {
+  const searchParams = new URLSearchParams();
+  searchParams.set("pageSize", String(params?.pageSize ?? 50));
+  if (params?.page != null) searchParams.set("page", String(params.page));
+  if (params?.keyword?.trim()) searchParams.set("keyword", params.keyword.trim());
+  if (params?.categoryId) searchParams.set("categoryId", params.categoryId);
+  if (params?.minPrice != null && !Number.isNaN(params.minPrice)) {
+    searchParams.set("minPrice", String(params.minPrice));
+  }
+  if (params?.maxPrice != null && !Number.isNaN(params.maxPrice)) {
+    searchParams.set("maxPrice", String(params.maxPrice));
+  }
+  if (params?.condition != null) searchParams.set("condition", String(params.condition));
+  if (params?.state != null) searchParams.set("state", String(params.state));
+  if (params?.postedAfter) searchParams.set("postedAfter", params.postedAfter);
+  if (params?.postedBefore) searchParams.set("postedBefore", params.postedBefore);
+  return `?${searchParams.toString()}`;
 }
 
 function mapListing(l: any): Listing {
@@ -36,12 +83,13 @@ function mapListing(l: any): Listing {
   };
 }
 
-export async function getListings(): Promise<Listing[]> {
+export async function getListings(params?: ListingsQueryParams): Promise<Listing[]> {
   try {
-    const res = await fetch(`${API_URL}/api/Listings?pageSize=50`);
+    const res = await fetch(`${API_URL}/api/Listings${buildListingsQuery(params)}`);
     if (!res.ok) throw new Error("No se pudieron obtener los anuncios");
     const data = await res.json();
-    return data.map(mapListing);
+    const items = Array.isArray(data) ? data : (data.items ?? []);
+    return items.map(mapListing);
   } catch (error) {
     if (error instanceof Error) throw error;
     throw new Error("No se pudieron obtener los anuncios");
@@ -102,7 +150,7 @@ export async function deleteListing(id: string): Promise<void> {
   }
 }
 
-export async function updateListingState(listingId: string, state: number) {
+export async function updateListingState(listingId: string, state: 0 | 1 | 2) {
   const res = await authFetch(`${API_URL}/api/Listings/${listingId}/state`, {
     method: "PATCH",
     body: JSON.stringify({ state }),
