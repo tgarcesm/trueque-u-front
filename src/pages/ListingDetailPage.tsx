@@ -78,6 +78,12 @@ export default function ListingDetailPage() {
   }, [fetchListing]);
 
   useEffect(() => {
+    if (listing && selectedImageIndex >= listing.images.length) {
+      setSelectedImageIndex(0);
+    }
+  }, [listing, selectedImageIndex]);
+
+  useEffect(() => {
     const listingId = id?.trim();
     if (!listingId) return;
 
@@ -191,16 +197,24 @@ export default function ListingDetailPage() {
             <section aria-label="Detalle del anuncio" className="space-y-6">
               {listing.images.length > 0 ? (
                 <div className="space-y-3">
-                  {/* Imagen principal (cambia cuando das click) */}
-                  <img
-                    src={listing.images[selectedImageIndex] ?? listing.images[0]}
-                    alt={listing.title}
-                    className="w-full rounded-lg border border-neutral-200 object-cover shadow-sm"
-                  />
+                  <div className="h-80 w-full overflow-hidden rounded-lg border border-neutral-200 bg-neutral-100 shadow-sm">
+                    <img
+                      src={
+                        listing.images[selectedImageIndex] ?? listing.images[0]
+                      }
+                      alt={listing.title}
+                      className="h-80 w-full object-cover"
+                    />
+                  </div>
 
-                  {/* Miniaturas */}
                   {listing.images.length > 1 ? (
-                    <div className="grid grid-cols-3 gap-2">
+                    <div
+                      className={
+                        listing.images.length > 4
+                          ? "flex gap-2 overflow-x-auto pb-1"
+                          : "flex flex-wrap gap-2"
+                      }
+                    >
                       {listing.images.map((url, idx) => {
                         const isActive = idx === selectedImageIndex;
 
@@ -209,17 +223,18 @@ export default function ListingDetailPage() {
                             key={`${url}-${idx}`}
                             type="button"
                             onClick={() => setSelectedImageIndex(idx)}
-                            className={`rounded-md border p-0 transition ${
+                            className={`h-20 w-20 flex-shrink-0 overflow-hidden rounded-md border p-0 transition ${
                               isActive
                                 ? "border-neutral-900 ring-2 ring-neutral-300"
                                 : "border-neutral-200 hover:border-neutral-400"
                             }`}
                             aria-label={`Ver imagen ${idx + 1}`}
+                            aria-current={isActive ? "true" : undefined}
                           >
                             <img
                               src={url}
                               alt={`${listing.title} ${idx + 1}`}
-                              className="aspect-square w-full rounded-md object-cover"
+                              className="h-20 w-20 object-cover"
                               loading="lazy"
                             />
                           </button>
@@ -230,7 +245,7 @@ export default function ListingDetailPage() {
                 </div>
               ) : (
                 <div
-                  className="flex aspect-[16/10] w-full items-center justify-center rounded-lg border border-dashed border-neutral-300 bg-neutral-100 text-neutral-500"
+                  className="flex h-80 w-full items-center justify-center rounded-lg border border-dashed border-neutral-300 bg-neutral-100 text-neutral-500"
                   role="img"
                   aria-label="Sin imagen"
                 >
