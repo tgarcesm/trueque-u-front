@@ -66,3 +66,8 @@ export function getUserRole(): string {
 export function isAdmin(): boolean {
   return getUserRole() === "Admin";
 }
+
+export const LOGIN_NOTICE_KEY = "loginNotice";
+
+export const SUSPENDED_SESSION_MESSAGE =
+  "Tu cuenta está suspendida. Tu sesión ha sido cerrada.";

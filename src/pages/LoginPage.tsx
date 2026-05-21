@@ -1,8 +1,8 @@
-import { type FormEvent, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { type FormEvent, useEffect, useState } from "react";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import AuthField, { AUTH_INPUT_CLASS, AuthIcons } from "../components/AuthField.tsx";
 import { login } from "../api/authService.ts";
-import { isAdmin } from "../utils/auth.ts";
+import { isAdmin, LOGIN_NOTICE_KEY } from "../utils/auth.ts";
 import { BTN_PRIMARY } from "../utils/ui.ts";
 
 export default function LoginPage() {
@@ -11,6 +11,20 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const navigate = useNavigate();
+  const location = useLocation();
+  useEffect(() => {
+    const fromState = (location.state as { notice?: string } | null)?.notice;
+    const fromStorage = sessionStorage.getItem(LOGIN_NOTICE_KEY);
+    const notice = fromState ?? fromStorage;
+    if (!notice) return;
+    setError(notice);
+    sessionStorage.removeItem(LOGIN_NOTICE_KEY);
+    if (fromState) {
+      navigate(location.pathname, { replace: true, state: {} });
+    }
+    // Solo al montar: aviso tras cierre de sesión por suspensión
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const isSubmitDisabled = loading || email.trim() === "" || password === "";
 

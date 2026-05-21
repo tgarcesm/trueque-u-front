@@ -1,4 +1,4 @@
-import { API_URL } from "./config.ts";
+import { API_URL, authFetch } from "./config.ts";
 
 export type UserProfile = {
   id: string;
@@ -20,6 +20,15 @@ function mapUserProfile(raw: Record<string, unknown>): UserProfile {
 
 export async function getUserById(userId: string): Promise<UserProfile> {
   const res = await fetch(`${API_URL}/users/${userId}`);
+  if (!res.ok) throw new Error("No se pudo cargar el perfil");
+  const data = await res.json();
+  return mapUserProfile(data as Record<string, unknown>);
+}
+
+export async function getAuthenticatedUserById(
+  userId: string,
+): Promise<UserProfile> {
+  const res = await authFetch(`${API_URL}/users/${userId}`);
   if (!res.ok) throw new Error("No se pudo cargar el perfil");
   const data = await res.json();
   return mapUserProfile(data as Record<string, unknown>);

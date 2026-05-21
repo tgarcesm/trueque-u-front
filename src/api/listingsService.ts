@@ -1,5 +1,6 @@
 import type { Listing } from "../types/index.ts";
 import { ApiValidationError, parseErrorResponse } from "../utils/apiErrors.ts";
+import { getToken } from "../utils/auth.ts";
 import { API_URL, authFetch } from "./config.ts";
 
 export const CATEGORY_IDS: Record<string, string> = {
@@ -92,12 +93,15 @@ function mapListing(raw: Record<string, unknown>): Listing {
         )
       : [],
     sellerId: String(raw.userId ?? raw.UserId ?? raw.sellerId ?? raw.SellerId ?? ""),
+    isHidden: Boolean(raw.isHidden ?? raw.IsHidden ?? false),
   };
 }
 
 export async function getListings(params?: ListingsQueryParams): Promise<Listing[]> {
   try {
-    const res = await fetch(`${API_URL}/api/Listings${buildListingsQuery(params)}`);
+    const res = getToken()
+      ? await authFetch(`${API_URL}/api/Listings${buildListingsQuery(params)}`)
+      : await fetch(`${API_URL}/api/Listings${buildListingsQuery(params)}`);
     if (!res.ok) throw new Error("No se pudieron obtener los anuncios");
     const data = await res.json();
     const items = Array.isArray(data) ? data : (data.items ?? []);

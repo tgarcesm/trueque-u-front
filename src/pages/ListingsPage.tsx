@@ -8,6 +8,7 @@ import {
 } from "../api/listingsService.ts";
 import { getUsersByIds, type UserProfile } from "../api/usersService.ts";
 import Spinner from "../components/Spinner.tsx";
+import { getCurrentUserId } from "../utils/auth.ts";
 import { POLL_INTERVAL_MS } from "../utils/polling.ts";
 import { statusLabel } from "../utils/statusLabel.ts";
 import { formatCop, PAGE_BG, statusBadgeClass } from "../utils/ui.ts";
@@ -48,6 +49,7 @@ export default function ListingsPage() {
   const [conditionFilter, setConditionFilter] = useState("");
   const [stateFilter, setStateFilter] = useState("");
   const navigate = useNavigate();
+  const currentUserId = getCurrentUserId();
 
   useEffect(() => {
     const timer = window.setTimeout(() => setDebouncedSearch(search), 400);
@@ -279,6 +281,11 @@ export default function ListingsPage() {
                           <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-indigo-50 to-blue-50 text-5xl">
                             {CATEGORY_EMOJI[listing.category] ?? "📦"}
                           </div>
+                        )}
+                        {listing.isHidden && listing.sellerId === currentUserId && (
+                          <span className="absolute left-3 top-3 rounded-full bg-red-600 px-3 py-1 text-xs font-bold text-white shadow-sm">
+                            Oculta por moderación
+                          </span>
                         )}
                         <span
                           className={`absolute right-3 top-3 rounded-full px-3 py-1 text-xs font-bold shadow-sm ${statusBadgeClass(listing.status)}`}

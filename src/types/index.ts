@@ -17,6 +17,7 @@ export interface Listing {
   status: "available" | "reserved" | "sold";
   images: string[];
   sellerId: string;
+  isHidden?: boolean;
 }
 
 export interface ChatMessage {

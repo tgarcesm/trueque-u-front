@@ -1,6 +1,9 @@
 import type { User } from "../types/index.ts";
+import { parseErrorResponse } from "../utils/apiErrors.ts";
 import { setToken } from "../utils/auth.ts";
 import { API_URL } from "./config.ts";
+
+const SUSPENDED_MESSAGE = "Tu cuenta está suspendida";
 
 export async function login(email: string, password: string): Promise<User> {
   try {
@@ -9,7 +12,18 @@ export async function login(email: string, password: string): Promise<User> {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ email, password }),
     });
-    if (!res.ok) throw new Error("Credenciales inválidas");
+
+    if (!res.ok) {
+      const messages = await parseErrorResponse(res);
+      if (res.status === 403) {
+        const suspendedMsg = messages.find((m) =>
+          m.toLowerCase().includes("suspendida"),
+        );
+        throw new Error(suspendedMsg ?? messages[0] ?? SUSPENDED_MESSAGE);
+      }
+      throw new Error(messages[0] ?? "Credenciales inválidas");
+    }
+
     const data = await res.json();
     setToken(data.token);
     return data as User;
