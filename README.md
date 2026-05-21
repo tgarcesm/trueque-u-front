@@ -1,12 +1,11 @@
 # TruequeU — Frontend
 
+[![Deployed on Vercel](https://img.shields.io/badge/Deployed%20on-Vercel-black?style=for-the-badge&logo=vercel)](https://trueque-u-front.vercel.app)
+
+
 ---
 
-## Autores
-
-- [@tgarcesm](https://github.com/tgarcesm) — Tomás Garcés
-- [@FreedPandorad78](https://github.com/FreedPandorad78) — David Orozco
----
+## Descripción
 
 Marketplace pensado para la vida universitaria: un lugar donde los estudiantes pueden comprar, vender o intercambiar cosas (libros, electrónica, ropa de club, lo que necesiten) sin complicarse.
 
@@ -19,7 +18,7 @@ Marketplace pensado para la vida universitaria: un lugar donde los estudiantes p
 
 ---
 
-## Configuración
+## Configuración local
 
 ### 1. Clonar repositorio
 
@@ -38,7 +37,9 @@ npm install
 
 Crear un archivo `.env` en la raíz del proyecto:
 
+```env
 VITE_API_URL=http://localhost:5088
+```
 
 > Ajusta el puerto según el que use el backend en tu máquina.
 
@@ -122,6 +123,7 @@ El frontend consume la API REST de [PTruequeU](https://github.com/FreedPandorad7
 
 La URL base se configura mediante `VITE_API_URL` en el archivo `.env`. La autenticación usa JWT almacenado en `localStorage` y se envía en el header `Authorization: Bearer <token>` en cada request protegido.
 
+---
 
 ## Estructura del proyecto
 
@@ -129,10 +131,61 @@ La URL base se configura mediante `VITE_API_URL` en el archivo `.env`. La autent
 
 ```
 src/
-├── api/        # Servicios mocks.
-├── components/ # Piezas reutilizables de UI (Navbar, etc.).
-├── mocks/      # Datos ficticios en JSON para desarrollo sin API.
-├── pages/      # Pantallas por ruta (login, listings, publish, favorites, chat…).
-└── types/      # Interfaces TypeScript compartidas (User, Listing, etc.).
-└── utils/      # Utilidades compartidas (statusLabel, etc.)
+├── api/        # Clientes HTTP hacia la API REST
+├── components/ # Piezas reutilizables de UI (Navbar, etc.)
+├── mocks/      # Datos ficticios en JSON para desarrollo sin API
+├── pages/      # Pantallas por ruta (login, listings, publish, favorites, chat…)
+├── types/      # Interfaces TypeScript compartidas (User, Listing, etc.)
+└── utils/      # Utilidades compartidas (auth, polling, ui, etc.)
 ```
+
+---
+
+## 🌐 Demo en producción
+
+**https://trueque-u-front.vercel.app**
+
+[![Deployed on Vercel](https://img.shields.io/badge/Deployed%20on-Vercel-black?style=for-the-badge&logo=vercel)](https://trueque-u-front.vercel.app)
+
+---
+
+## Deploy en producción con ngrok
+
+### Requisitos
+
+- Backend corriendo en Visual Studio (puerto 5088)
+- SQL Server activo
+- ngrok instalado
+
+### Pasos cada vez que se vaya a usar en producción
+
+1. Iniciar SQL Server
+2. Correr el backend en Visual Studio
+3. Abrir PowerShell y ejecutar:
+
+   ```powershell
+   ngrok http 5088 --request-header-add "ngrok-skip-browser-warning: true"
+   ```
+
+4. Copiar la URL que da ngrok (ej: `https://abc123.ngrok-free.app`)
+5. En Vercel → Settings → Environment Variables → actualizar `VITE_API_URL` con la nueva URL  
+   [Configuración de producción en Vercel](https://vercel.com/tgarcesms-projects/trueque-u-front/settings/environments/production)
+6. En Vercel → Deployments → **Redeploy**
+7. Acceder a **https://trueque-u-front.vercel.app**
+
+### Credenciales de prueba
+
+| Usuario | Email | Contraseña | Rol |
+|---------|-------|------------|-----|
+| admin | admin@email.com | Test1234! | Admin |
+| andrea | andrea@email.com | Test1234! | User |
+| bruno | bruno@email.com | Test1234! | User |
+| carla | carla@email.com | Test1234! | User |
+
+---
+
+## Autores
+
+
+- [@FreedPandorad78](https://github.com/FreedPandorad78) — David Orozco
+- [@tgarcesm](https://github.com/tgarcesm) — Tomás Garcés
