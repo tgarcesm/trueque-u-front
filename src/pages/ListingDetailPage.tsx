@@ -24,6 +24,7 @@ export default function ListingDetailPage() {
   const [favoriteMsg, setFavoriteMsg] = useState("");
   const [favoriteError, setFavoriteError] = useState("");
   const [chatLoading, setChatLoading] = useState(false);
+  const [chatError, setChatError] = useState("");
   const [deleteLoading, setDeleteLoading] = useState(false);
   const [reportModalOpen, setReportModalOpen] = useState(false);
   const [reportMsg, setReportMsg] = useState("");
@@ -82,11 +83,14 @@ export default function ListingDetailPage() {
   async function handleStartChat() {
     if (!id) return;
     setChatLoading(true);
+    setChatError("");
     try {
       const chat = await startChat(id);
       navigate(`/chat/${chat.id}`);
-    } catch {
-      navigate(`/chat/${id}`);
+    } catch (err) {
+      setChatError(
+        err instanceof Error ? err.message : "No se pudo iniciar el chat",
+      );
     } finally {
       setChatLoading(false);
     }
@@ -268,6 +272,11 @@ export default function ListingDetailPage() {
                 {reportError}
               </p>
             )}
+            {chatError !== "" && (
+              <p className="mt-4 text-sm text-red-600" role="alert">
+                {chatError}
+              </p>
+            )}
 
             <section
               aria-label="Acciones"
@@ -309,6 +318,14 @@ export default function ListingDetailPage() {
 
               {isOwner && (
                 <>
+                  <button
+                    type="button"
+                    onClick={() => navigate(`/chats?listingId=${id}`)}
+                    className="rounded-md border border-indigo-300 bg-indigo-50 px-4 py-2.5 text-sm font-medium text-indigo-800 transition hover:bg-indigo-100"
+                  >
+                    Ver mis chats sobre esta publicación
+                  </button>
+
                   {getOwnerStateActions(listing.status).map((action) => (
                     <button
                       key={action.targetState}

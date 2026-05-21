@@ -45,6 +45,16 @@ export default function Navbar() {
               </NavLink>
             </li>
             <li>
+              <NavLink
+                to="/chats"
+                className={navLinkClass}
+                aria-label="Chats"
+                title="Chats"
+              >
+                💬 Chats
+              </NavLink>
+            </li>
+            <li>
               <NavLink to="/profile" className={navLinkClass}>
                 Mi perfil
               </NavLink>

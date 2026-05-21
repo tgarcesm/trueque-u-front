@@ -27,6 +27,18 @@ export interface ChatMessage {
   createdAt: string;
 }
 
+export interface ChatThread {
+  id: string;
+  listingId: string;
+  buyerId: string;
+  sellerId: string;
+  listingTitle: string;
+  listingIsHidden: boolean;
+  lastMessageText: string | null;
+  lastMessageSentAt: string | null;
+  createdAt: string;
+}
+
 export interface Favorite {
   id: string;
   userId: string;

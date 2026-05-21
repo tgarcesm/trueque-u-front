@@ -4,6 +4,8 @@ import type { ChatMessage } from "../types/index.ts";
 import { getChatMessages, sendMessage } from "../api/chatsService.ts";
 import { getCurrentUserId } from "../utils/auth.ts";
 
+const CHAT_MESSAGES_POLL_MS = 10_000;
+
 export default function ChatPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
@@ -62,7 +64,7 @@ export default function ChatPage() {
 
     const intervalId = window.setInterval(() => {
       void fetchMessages(true);
-    }, 10_000);
+    }, CHAT_MESSAGES_POLL_MS);
     return () => window.clearInterval(intervalId);
   }, [id, fetchMessages]);
 
@@ -92,10 +94,10 @@ export default function ChatPage() {
         <div className="border-b border-neutral-200 bg-white px-4 py-3 shadow-sm">
           <button
             type="button"
-            onClick={() => navigate("/listings")}
+            onClick={() => navigate("/chats")}
             className="rounded-md border border-neutral-300 bg-white px-3 py-1.5 text-sm font-medium text-neutral-900 transition hover:bg-neutral-50"
           >
-            ← Volver
+            ← Mis chats
           </button>
         </div>
 

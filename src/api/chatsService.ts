@@ -1,5 +1,40 @@
 import { API_URL, authFetch } from "./config.ts";
-import type { ChatMessage } from "../types/index.ts";
+import type { ChatMessage, ChatThread } from "../types/index.ts";
+
+function mapChatThread(raw: Record<string, unknown>): ChatThread {
+  return {
+    id: String(raw.chatThreadId ?? raw.ChatThreadId ?? ""),
+    listingId: String(raw.listingId ?? raw.ListingId ?? ""),
+    buyerId: String(raw.buyerId ?? raw.BuyerId ?? ""),
+    sellerId: String(raw.sellerId ?? raw.SellerId ?? ""),
+    listingTitle: String(raw.listingTitle ?? raw.ListingTitle ?? ""),
+    listingIsHidden: Boolean(raw.listingIsHidden ?? raw.ListingIsHidden),
+    lastMessageText:
+      raw.lastMessageText != null || raw.LastMessageText != null
+        ? String(raw.lastMessageText ?? raw.LastMessageText)
+        : null,
+    lastMessageSentAt:
+      raw.lastMessageSentAt != null || raw.LastMessageSentAt != null
+        ? String(raw.lastMessageSentAt ?? raw.LastMessageSentAt)
+        : null,
+    createdAt: String(raw.createdAt ?? raw.CreatedAt ?? ""),
+  };
+}
+
+export async function getMyChats(): Promise<ChatThread[]> {
+  try {
+    const res = await authFetch(`${API_URL}/chats`);
+    if (!res.ok) throw new Error("No se pudieron cargar los chats");
+    const data = await res.json();
+    const items = Array.isArray(data) ? data : [];
+    return items.map((item) =>
+      mapChatThread(item as Record<string, unknown>),
+    );
+  } catch (error) {
+    if (error instanceof Error) throw error;
+    throw new Error("No se pudieron cargar los chats");
+  }
+}
 
 export async function getChatMessages(chatId: string): Promise<ChatMessage[]> {
   try {

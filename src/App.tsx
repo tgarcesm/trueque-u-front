@@ -5,6 +5,7 @@ import Navbar from './components/Navbar.tsx'
 import ProtectedRoute from './components/ProtectedRoute.tsx'
 import AdminDashboardPage from './pages/AdminDashboardPage.tsx'
 import ChatPage from './pages/ChatPage.tsx'
+import ChatsListPage from './pages/ChatsListPage.tsx'
 import FavoritesPage from './pages/FavoritesPage.tsx'
 import ListingDetailPage from './pages/ListingDetailPage.tsx'
 import ListingsPage from './pages/ListingsPage.tsx'
@@ -43,6 +44,7 @@ function App() {
             <Route path="/publish" element={<PublishPage />} />
             <Route path="/favorites" element={<FavoritesPage />} />
             <Route path="/profile" element={<ProfilePage />} />
+            <Route path="/chats" element={<ChatsListPage />} />
             <Route path="/chat/:id" element={<ChatPage />} />
           </Route>
           <Route element={<AdminRoute />}>
