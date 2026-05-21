@@ -1,6 +1,7 @@
 import { type FormEvent, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { register } from "../api/authService.ts";
+import { isAdmin } from "../utils/auth.ts";
 
 export default function RegisterPage() {
   const [name, setName] = useState("");
@@ -24,7 +25,7 @@ export default function RegisterPage() {
     setLoading(true);
     try {
       await register(name, email, password, programName);
-      navigate("/login");
+      navigate(isAdmin() ? "/admin" : "/listings", { replace: true });
     } catch (err) {
       setError(err instanceof Error ? err.message : "Error al registrarse");
     } finally {

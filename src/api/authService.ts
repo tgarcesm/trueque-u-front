@@ -38,7 +38,14 @@ export async function register(
     });
     if (!res.ok) throw new Error("No se pudo registrar el usuario");
     const data = await res.json();
-    return data as User;
+    const token =
+      (data as { token?: string; Token?: string }).token ??
+      (data as { token?: string; Token?: string }).Token;
+    if (token) {
+      setToken(token);
+      return data as User;
+    }
+    return login(email, password);
   } catch (error) {
     if (error instanceof Error) throw error;
     throw new Error("No se pudo registrar el usuario");
