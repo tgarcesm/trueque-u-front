@@ -1,6 +1,7 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { getAdminListings, hideListing, type AdminListing } from "../api/adminService.ts";
+import { POLL_INTERVAL_MS } from "../utils/polling.ts";
 import { statusLabel } from "../utils/statusLabel.ts";
 
 const STATUS_COLORS: Record<string, string> = {
@@ -17,25 +18,38 @@ export default function AdminListingsPage() {
   const [actionMsg, setActionMsg] = useState("");
   const [hidingId, setHidingId] = useState<string | null>(null);
 
-  useEffect(() => {
-    async function load() {
+  const loadListings = useCallback(async (silent = false) => {
+    if (!silent) {
       setLoading(true);
       setError("");
-      try {
-        const data = await getAdminListings();
-        setListings(data);
-      } catch (err) {
+    }
+    try {
+      const data = await getAdminListings();
+      setListings(data);
+      if (silent) setError("");
+    } catch (err) {
+      if (!silent) {
         setError(
           err instanceof Error
             ? err.message
             : "No se pudieron cargar las publicaciones",
         );
-      } finally {
-        setLoading(false);
       }
+    } finally {
+      if (!silent) setLoading(false);
     }
-    void load();
   }, []);
+
+  useEffect(() => {
+    void loadListings(false);
+  }, [loadListings]);
+
+  useEffect(() => {
+    const intervalId = window.setInterval(() => {
+      void loadListings(true);
+    }, POLL_INTERVAL_MS);
+    return () => window.clearInterval(intervalId);
+  }, [loadListings]);
 
   async function handleHide(listing: AdminListing) {
     const reason = window.prompt("Motivo para ocultar la publicación:");

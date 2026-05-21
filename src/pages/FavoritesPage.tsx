@@ -1,7 +1,8 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import type { Favorite } from "../types/index.ts";
 import { getFavorites, removeFavorite } from "../api/favoritesService.ts";
+import { POLL_INTERVAL_MS } from "../utils/polling.ts";
 
 export default function FavoritesPage() {
   const [favorites, setFavorites] = useState<Favorite[]>([]);
@@ -9,25 +10,38 @@ export default function FavoritesPage() {
   const [error, setError] = useState("");
   const navigate = useNavigate();
 
-  useEffect(() => {
-    async function fetchFavorites() {
+  const fetchFavorites = useCallback(async (silent = false) => {
+    if (!silent) {
       setLoading(true);
       setError("");
-      try {
-        const data = await getFavorites();
-        setFavorites(data);
-      } catch (err) {
+    }
+    try {
+      const data = await getFavorites();
+      setFavorites(data);
+      if (silent) setError("");
+    } catch (err) {
+      if (!silent) {
         setError(
           err instanceof Error
             ? err.message
             : "No se pudieron cargar los favoritos",
         );
-      } finally {
-        setLoading(false);
       }
+    } finally {
+      if (!silent) setLoading(false);
     }
-    void fetchFavorites();
   }, []);
+
+  useEffect(() => {
+    void fetchFavorites(false);
+  }, [fetchFavorites]);
+
+  useEffect(() => {
+    const intervalId = window.setInterval(() => {
+      void fetchFavorites(true);
+    }, POLL_INTERVAL_MS);
+    return () => window.clearInterval(intervalId);
+  }, [fetchFavorites]);
 
   async function handleRemove(favorite: Favorite) {
     try {

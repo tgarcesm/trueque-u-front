@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import type { Listing } from "../types/index.ts";
 import {
@@ -13,6 +13,7 @@ import { getOwnerStateActions } from "../utils/listingStateActions.ts";
 import ReportListingModal from "../components/ReportListingModal.tsx";
 import { reportListing } from "../api/reportsService.ts";
 import { getCurrentUserId } from "../utils/auth.ts";
+import { POLL_INTERVAL_MS } from "../utils/polling.ts";
 
 export default function ListingDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -37,34 +38,54 @@ export default function ListingDetailPage() {
   const currentUserId = getCurrentUserId();
   const isOwner = listing?.sellerId === currentUserId;
 
-  useEffect(() => {
-    async function fetchListing(listingId: string) {
-      setLoading(true);
-      setError("");
+  const fetchListing = useCallback(
+    async (silent = false) => {
+      const listingId = id?.trim();
+      if (!listingId) {
+        setListing(null);
+        if (!silent) {
+          setError("");
+          setLoading(false);
+        }
+        return;
+      }
+
+      if (!silent) {
+        setLoading(true);
+        setError("");
+      }
       try {
         const data = await getListingById(listingId);
         setListing(data);
-        setSelectedImageIndex(0);
+        if (!silent) setSelectedImageIndex(0);
+        if (silent) setError("");
       } catch (err) {
-        setListing(null);
-        setError(
-          err instanceof Error ? err.message : "No se pudo cargar la publicación",
-        );
+        if (!silent) {
+          setListing(null);
+          setError(
+            err instanceof Error ? err.message : "No se pudo cargar la publicación",
+          );
+        }
       } finally {
-        setLoading(false);
+        if (!silent) setLoading(false);
       }
-    }
+    },
+    [id],
+  );
 
+  useEffect(() => {
+    void fetchListing(false);
+  }, [fetchListing]);
+
+  useEffect(() => {
     const listingId = id?.trim();
-    if (!listingId) {
-      setListing(null);
-      setError("");
-      setLoading(false);
-      return;
-    }
+    if (!listingId) return;
 
-    void fetchListing(listingId);
-  }, [id]);
+    const intervalId = window.setInterval(() => {
+      void fetchListing(true);
+    }, POLL_INTERVAL_MS);
+    return () => window.clearInterval(intervalId);
+  }, [id, fetchListing]);
 
   async function handleAddFavorite() {
     if (!id) return;

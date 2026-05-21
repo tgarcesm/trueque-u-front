@@ -6,6 +6,7 @@ import {
   getListings,
   type ListingsQueryParams,
 } from "../api/listingsService.ts";
+import { POLL_INTERVAL_MS } from "../utils/polling.ts";
 import { statusLabel } from "../utils/statusLabel.ts";
 
 const CATEGORY_OPTIONS = [
@@ -107,7 +108,7 @@ export default function ListingsPage() {
   useEffect(() => {
     const intervalId = window.setInterval(() => {
       void fetchListings(true);
-    }, 10_000);
+    }, POLL_INTERVAL_MS);
     return () => window.clearInterval(intervalId);
   }, [fetchListings]);
 

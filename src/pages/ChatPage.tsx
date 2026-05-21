@@ -9,8 +9,7 @@ import {
 import { reportUser } from "../api/reportsService.ts";
 import ReportModal from "../components/ReportModal.tsx";
 import { getCurrentUserId } from "../utils/auth.ts";
-
-const CHAT_MESSAGES_POLL_MS = 10_000;
+import { CHAT_POLL_INTERVAL_MS } from "../utils/polling.ts";
 
 export default function ChatPage() {
   const { id } = useParams<{ id: string }>();
@@ -94,8 +93,11 @@ export default function ChatPage() {
     if (!chatId) return;
 
     const intervalId = window.setInterval(() => {
+      void getChatThread(chatId)
+        .then(setThread)
+        .catch(() => setThread(null));
       void fetchMessages(true);
-    }, CHAT_MESSAGES_POLL_MS);
+    }, CHAT_POLL_INTERVAL_MS);
     return () => window.clearInterval(intervalId);
   }, [id, fetchMessages]);
 

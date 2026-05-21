@@ -6,7 +6,7 @@ export default function RegisterPage() {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [program, setProgram] = useState("");
+  const [programName, setProgramName] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const navigate = useNavigate();
@@ -16,14 +16,14 @@ export default function RegisterPage() {
     name.trim() === "" ||
     email.trim() === "" ||
     password === "" ||
-    program.trim() === "";
+    programName.trim() === "";
 
   async function handleSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setError("");
     setLoading(true);
     try {
-      await register(name, email, password, program);
+      await register(name, email, password, programName);
       navigate("/login");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Error al registrarse");
@@ -123,10 +123,10 @@ export default function RegisterPage() {
               <input
                 id="register-program"
                 type="text"
-                name="program"
+                name="programName"
                 autoComplete="organization"
-                value={program}
-                onChange={(e) => setProgram(e.target.value)}
+                value={programName}
+                onChange={(e) => setProgramName(e.target.value)}
                 className="w-full rounded-xl border border-neutral-200 px-4 py-2.5 text-neutral-900 shadow-sm outline-none transition focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100"
                 disabled={loading}
                 placeholder="Ingeniería de Sistemas"

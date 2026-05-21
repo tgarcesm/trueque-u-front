@@ -5,6 +5,7 @@ export type UserProfile = {
   fullName: string;
   programName: string;
   rating: number;
+  isSuspended: boolean;
 };
 
 function mapUserProfile(raw: Record<string, unknown>): UserProfile {
@@ -13,6 +14,7 @@ function mapUserProfile(raw: Record<string, unknown>): UserProfile {
     fullName: String(raw.fullName ?? raw.FullName ?? ""),
     programName: String(raw.programName ?? raw.ProgramName ?? ""),
     rating: Number(raw.rating ?? raw.Rating ?? 0),
+    isSuspended: Boolean(raw.isSuspended ?? raw.IsSuspended),
   };
 }
 

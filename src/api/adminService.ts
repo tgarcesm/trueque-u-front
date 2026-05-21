@@ -21,10 +21,22 @@ export type AdminListing = Listing & {
   isHidden: boolean;
 };
 
+export type AdminUser = {
+  id: string;
+  fullName: string;
+  email: string;
+  programName: string;
+  rating: number;
+  isSuspended: boolean;
+};
+
+/** 0 = Listing, 1 = User (enum del backend) */
+export type ReportTargetType = 0 | 1;
+
 export type AdminReport = {
   reportId: string;
   reporterId: string;
-  targetType: "listing" | "user";
+  targetType: ReportTargetType;
   reportedListingId: string | null;
   reportedUserId: string | null;
   reason: string;
@@ -32,10 +44,15 @@ export type AdminReport = {
   createdAt: string;
 };
 
-function mapTargetType(value: unknown): AdminReport["targetType"] {
-  if (value === 1 || value === "User" || value === "user") return "user";
-  if (value === 0 || value === "Listing" || value === "listing") return "listing";
-  return "listing";
+function mapTargetType(value: unknown): ReportTargetType {
+  if (value === 1 || value === "1") return 1;
+  if (value === 0 || value === "0") return 0;
+  if (typeof value === "string") {
+    const lower = value.toLowerCase();
+    if (lower === "user") return 1;
+    if (lower === "listing") return 0;
+  }
+  return 0;
 }
 
 function mapReport(raw: Record<string, unknown>): AdminReport {
@@ -86,12 +103,48 @@ export async function getAdminListings(): Promise<AdminListing[]> {
   return (items as Record<string, unknown>[]).map(mapAdminListing);
 }
 
+function mapAdminUser(raw: Record<string, unknown>): AdminUser {
+  return {
+    id: String(raw.id ?? raw.Id ?? raw.userId ?? raw.UserId ?? ""),
+    fullName: String(raw.fullName ?? raw.FullName ?? ""),
+    email: String(raw.email ?? raw.Email ?? ""),
+    programName: String(raw.programName ?? raw.ProgramName ?? ""),
+    rating: Number(raw.rating ?? raw.Rating ?? 0),
+    isSuspended: Boolean(raw.isSuspended ?? raw.IsSuspended),
+  };
+}
+
+export async function getAdminUsers(): Promise<AdminUser[]> {
+  const res = await authFetch(`${API_URL}/admin/users`);
+  if (!res.ok) throw new Error("No se pudieron cargar los usuarios");
+  const data = await res.json();
+  const items = Array.isArray(data) ? data : (data.items ?? []);
+  return (items as Record<string, unknown>[]).map(mapAdminUser);
+}
+
 export async function getAdminReports(): Promise<AdminReport[]> {
   const res = await authFetch(`${API_URL}/admin/reports`);
   if (!res.ok) throw new Error("No se pudieron cargar los reportes");
   const data = await res.json();
   const items = Array.isArray(data) ? data : [];
   return items.map((item) => mapReport(item as Record<string, unknown>));
+}
+
+export async function getAdminListingById(
+  listingId: string,
+): Promise<AdminListing | null> {
+  try {
+    const res = await authFetch(`${API_URL}/api/Listings/${listingId}`);
+    if (res.ok) {
+      const data = await res.json();
+      return mapAdminListing(data as Record<string, unknown>);
+    }
+  } catch {
+    // fallback: listado admin incluye publicaciones ocultas
+  }
+
+  const listings = await getAdminListings();
+  return listings.find((l) => l.id === listingId) ?? null;
 }
 
 export async function hideListing(listingId: string, reason: string): Promise<void> {
@@ -111,6 +164,22 @@ export async function hideListing(listingId: string, reason: string): Promise<vo
   }
 }
 
+export async function showListing(listingId: string): Promise<void> {
+  const res = await authFetch(`${API_URL}/admin/listings/${listingId}/show`, {
+    method: "PATCH",
+  });
+  if (!res.ok) {
+    let msg = "No se pudo reactivar la publicación";
+    try {
+      const err = await res.json();
+      msg = (err as { message?: string }).message ?? msg;
+    } catch {
+      // ignore
+    }
+    throw new Error(msg);
+  }
+}
+
 export async function suspendUser(userId: string, reason: string): Promise<void> {
   const res = await authFetch(`${API_URL}/admin/users/${userId}/suspend`, {
     method: "PATCH",
@@ -118,6 +187,22 @@ export async function suspendUser(userId: string, reason: string): Promise<void>
   });
   if (!res.ok) {
     let msg = "No se pudo suspender al usuario";
+    try {
+      const err = await res.json();
+      msg = (err as { message?: string }).message ?? msg;
+    } catch {
+      // ignore
+    }
+    throw new Error(msg);
+  }
+}
+
+export async function unsuspendUser(userId: string): Promise<void> {
+  const res = await authFetch(`${API_URL}/admin/users/${userId}/unsuspend`, {
+    method: "PATCH",
+  });
+  if (!res.ok) {
+    let msg = "No se pudo reactivar al usuario";
     try {
       const err = await res.json();
       msg = (err as { message?: string }).message ?? msg;

@@ -23,14 +23,18 @@ export async function register(
   name: string,
   email: string,
   password: string,
-  program: string,
+  programName: string,
 ): Promise<User> {
   try {
-    void program;
     const res = await fetch(`${API_URL}/auth/register`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ fullName: name, email, password }),
+      body: JSON.stringify({
+        fullName: name,
+        email,
+        password,
+        programName: programName.trim(),
+      }),
     });
     if (!res.ok) throw new Error("No se pudo registrar el usuario");
     const data = await res.json();

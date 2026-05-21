@@ -1,9 +1,10 @@
-import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useCallback, useEffect, useState } from "react";
+import { Link, useNavigate, useParams } from "react-router-dom";
 import { getListings } from "../api/listingsService.ts";
 import { getUserById, type UserProfile } from "../api/usersService.ts";
 import type { Listing } from "../types/index.ts";
 import { getCurrentUserId } from "../utils/auth.ts";
+import { POLL_INTERVAL_MS } from "../utils/polling.ts";
 import { statusLabel } from "../utils/statusLabel.ts";
 
 const STATUS_COLORS: Record<string, string> = {
@@ -14,23 +15,30 @@ const STATUS_COLORS: Record<string, string> = {
 
 export default function ProfilePage() {
   const navigate = useNavigate();
-  const userId = getCurrentUserId();
+  const { userId: routeUserId } = useParams<{ userId?: string }>();
+  const currentUserId = getCurrentUserId();
+  const userId = routeUserId?.trim() || currentUserId;
+  const isOwnProfile = userId === currentUserId;
 
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [listings, setListings] = useState<Listing[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
-  useEffect(() => {
-    if (!userId) {
-      setLoading(false);
-      setError("No se pudo identificar al usuario.");
-      return;
-    }
+  const loadProfile = useCallback(
+    async (silent = false) => {
+      if (!userId) {
+        if (!silent) {
+          setLoading(false);
+          setError("No se pudo identificar al usuario.");
+        }
+        return;
+      }
 
-    async function loadProfile() {
-      setLoading(true);
-      setError("");
+      if (!silent) {
+        setLoading(true);
+        setError("");
+      }
       try {
         const [userData, allListings] = await Promise.all([
           getUserById(userId),
@@ -38,28 +46,55 @@ export default function ProfilePage() {
         ]);
         setProfile(userData);
         setListings(allListings.filter((l) => l.sellerId === userId));
+        if (silent) setError("");
       } catch (err) {
-        setProfile(null);
-        setListings([]);
-        setError(
-          err instanceof Error ? err.message : "No se pudo cargar el perfil",
-        );
+        if (!silent) {
+          setProfile(null);
+          setListings([]);
+          setError(
+            err instanceof Error ? err.message : "No se pudo cargar el perfil",
+          );
+        }
       } finally {
-        setLoading(false);
+        if (!silent) setLoading(false);
       }
-    }
+    },
+    [userId],
+  );
 
-    void loadProfile();
-  }, [userId]);
+  useEffect(() => {
+    void loadProfile(false);
+  }, [loadProfile]);
+
+  useEffect(() => {
+    if (!userId) return;
+
+    const intervalId = window.setInterval(() => {
+      void loadProfile(true);
+    }, POLL_INTERVAL_MS);
+    return () => window.clearInterval(intervalId);
+  }, [userId, loadProfile]);
 
   return (
     <main className="min-h-screen bg-slate-50 px-4 py-8">
       <div className="mx-auto max-w-4xl space-y-8">
         <section className="rounded-2xl bg-gradient-to-r from-indigo-600 to-blue-500 p-6 text-white shadow-lg sm:p-8">
-          <h1 className="text-2xl font-bold tracking-tight">Mi perfil</h1>
+          <h1 className="text-2xl font-bold tracking-tight">
+            {isOwnProfile ? "Mi perfil" : "Perfil de usuario"}
+          </h1>
           <p className="mt-1 text-sm text-white/80">
-            Tu información y publicaciones en TruequeU
+            {isOwnProfile
+              ? "Tu información y publicaciones en TruequeU"
+              : "Información y publicaciones del usuario"}
           </p>
+          {!isOwnProfile ? (
+            <Link
+              to="/admin"
+              className="mt-3 inline-block text-sm font-medium text-white/90 underline hover:text-white"
+            >
+              ← Volver al panel
+            </Link>
+          ) : null}
         </section>
 
         {loading ? (
@@ -95,13 +130,31 @@ export default function ProfilePage() {
                     {profile.programName || "—"}
                   </dd>
                 </div>
+                {!isOwnProfile ? (
+                  <div className="sm:col-span-2">
+                    <dt className="text-xs font-medium uppercase tracking-wide text-neutral-500">
+                      Estado de cuenta
+                    </dt>
+                    <dd className="mt-1">
+                      <span
+                        className={`inline-flex rounded-full px-2.5 py-0.5 text-xs font-medium ${
+                          profile.isSuspended
+                            ? "bg-red-50 text-red-700"
+                            : "bg-green-50 text-green-700"
+                        }`}
+                      >
+                        {profile.isSuspended ? "Suspendido" : "Activo"}
+                      </span>
+                    </dd>
+                  </div>
+                ) : null}
               </dl>
             </section>
 
             <section className="rounded-2xl bg-white p-6 shadow-sm">
               <div className="mb-4 flex items-center justify-between gap-4">
                 <h2 className="text-lg font-semibold text-neutral-900">
-                  Mis publicaciones
+                  {isOwnProfile ? "Mis publicaciones" : "Publicaciones"}
                 </h2>
                 <span className="text-sm text-neutral-500">
                   {listings.length} publicación{listings.length !== 1 ? "es" : ""}
@@ -110,14 +163,20 @@ export default function ProfilePage() {
 
               {listings.length === 0 ? (
                 <p className="rounded-xl bg-neutral-50 p-8 text-center text-neutral-500">
-                  Aún no tienes publicaciones.{" "}
-                  <button
-                    type="button"
-                    onClick={() => navigate("/publish")}
-                    className="font-semibold text-indigo-600 hover:text-indigo-700"
-                  >
-                    Publicar ahora
-                  </button>
+                  {isOwnProfile ? (
+                    <>
+                      Aún no tienes publicaciones.{" "}
+                      <button
+                        type="button"
+                        onClick={() => navigate("/publish")}
+                        className="font-semibold text-indigo-600 hover:text-indigo-700"
+                      >
+                        Publicar ahora
+                      </button>
+                    </>
+                  ) : (
+                    "Este usuario no tiene publicaciones visibles."
+                  )}
                 </p>
               ) : (
                 <ul className="divide-y divide-neutral-100">

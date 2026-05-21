@@ -3,8 +3,7 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import { getMyChats } from "../api/chatsService.ts";
 import type { ChatThread } from "../types/index.ts";
 import { getCurrentUserId } from "../utils/auth.ts";
-
-const CHATS_LIST_POLL_MS = 3_000;
+import { CHAT_POLL_INTERVAL_MS } from "../utils/polling.ts";
 
 function formatDate(iso: string | null): string {
   if (!iso) return "";
@@ -54,7 +53,7 @@ export default function ChatsListPage() {
   useEffect(() => {
     const intervalId = window.setInterval(() => {
       void fetchChats(true);
-    }, CHATS_LIST_POLL_MS);
+    }, CHAT_POLL_INTERVAL_MS);
     return () => window.clearInterval(intervalId);
   }, [fetchChats]);
 

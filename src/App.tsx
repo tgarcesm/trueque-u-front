@@ -48,6 +48,7 @@ function App() {
             <Route path="/publish" element={<PublishPage />} />
             <Route path="/favorites" element={<FavoritesPage />} />
             <Route path="/profile" element={<ProfilePage />} />
+            <Route path="/users/:userId" element={<ProfilePage />} />
             <Route path="/chats" element={<ChatsListPage />} />
             <Route path="/chat/:id" element={<ChatPage />} />
           </Route>
